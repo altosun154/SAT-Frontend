@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://www.desmos.com/api/v1.12/calculator.js?apiKey=65cacf172ca34f8dafa2600ccf9194fd"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Practice Test | SAT Platform</title>
+  <link rel="stylesheet" href="css/style.css?v=2026-03-14-2" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .test-header {
+      background-color: #0e1c5e;
+      color: #fff;
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .test-header .section-title {
+      font-size: 0.95rem;
+      color: #c0c4d6;
+    }
+    .test-header .timer {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      background: #152a8c;
+      padding: 0.3rem 1rem;
+      border-radius: 6px;
+      letter-spacing: 1px;
+      transition: background 0.3s;
+    }
+    .test-header .timer.warning { background: #c0392b; }
+    .test-header .flag-btn {
+      background: none;
+      border: 1px solid #6c63ff;
+      color: #6c63ff;
+      padding: 0.3rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    .test-header .flag-btn:hover,
+    .test-header .flag-btn.flagged {
+      background: #6c63ff;
+      color: #fff;
+    }
+
+    /* ── Calculator Button ─────────────────────────────────── */
+    .calc-btn {
+      background: none;
+      border: 1px solid #80bf8a;
+      color: #80bf8a;
+      padding: 0.3rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s, color 0.2s;
+      display: none; /* shown only during calc-allowed sections */
+    }
+    .calc-btn:hover,
+    .calc-btn.active {
+      background: #80bf8a;
+      color: #0e1c5e;
+    }
+
+    /* ── Calculator Popup ──────────────────────────────────── */
+    #calc-popup {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      width: 660px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      z-index: 1500;
+      overflow: hidden;
+      display: none;
+    }
+    .calc-popup-header {
+      background: #0e1c5e;
+      color: #fff;
+      padding: 0.55rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      user-select: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .calc-popup-header span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #calc-close {
+      background: none;
+      border: none;
+      color: #c0c4d6;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0.2rem;
+      transition: color 0.15s;
+    }
+    #calc-close:hover { color: #fff; }
+    #calculator {
+      width: 100%;
+      height: 460px;
+    }
+
+    .test-layout {
+      display: flex;
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      align-items: flex-start;
+    }
+
+    .question-panel {
+      flex: 1;
+      background: #fff;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .question-meta {
+      font-size: 0.82rem;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+    .question-passage {
+      background: #f8f9fc;
+      border-left: 4px solid #6c63ff;
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .passage-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6c63ff;
+      margin-bottom: 0.6rem;
+    }
+    .passage-body {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    .passage-empty {
+      color: #aaa;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+    .question-text {
+      font-size: 1.05rem;
+      color: #0e1c5e;
+      line-height: 1.7;
+      margin-bottom: 1.8rem;
+    }
+    .choices {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .choices li {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 1.2rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      font-size: 0.97rem;
+    }
+    .choices li:hover {
+      border-color: #6c63ff;
+      background: #f5f4ff;
+    }
+    .choices li.selected {
+      border-color: #6c63ff;
+      background: #eeecff;
+    }
+    .choice-letter {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #0e1c5e;
+      flex-shrink: 0;
+    }
+    .choices li.selected .choice-letter {
+      background: #6c63ff;
+      color: #fff;
+    }
+
+    .nav-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #eee;
+    }
+    .nav-footer button {
+      padding: 0.6rem 1.6rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .btn-prev { background: #f0f0f0; color: #333; }
+    .btn-prev:hover { background: #e0e0e0; }
+    .btn-next { background: #6c63ff; color: #fff; }
+    .btn-next:hover { background: #5a52e0; }
+    .question-counter { font-size: 0.9rem; color: #888; }
+
+    .question-grid-panel {
+      width: 220px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .question-grid-panel h3 {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .question-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .q-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #333;
+      transition: background 0.2s;
+    }
+    .q-num:hover { background: #e0e0e0; }
+    .q-num.answered { background: #6c63ff; color: #fff; }
+    .q-num.flagged { background: #f59e0b; color: #fff; }
+    .q-num.current { outline: 2px solid #6c63ff; }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 1.2rem;
+      padding: 0.7rem;
+      background: #0e1c5e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .submit-btn:hover { background: #6c63ff; }
+  </style>
+</head>
+<body>
+<script>requireAuth();</script>
+
+  <!-- Test Header -->
+  <div class="test-header" id="test-header">
+    <div class="section-title" id="section-title">Loading...</div>
+    <div class="timer" id="timer">⏱ 00:00</div>
+    <button class="calc-btn" id="calc-btn">🖩 Calculator</button>
+    <button class="flag-btn" id="flag-btn">🚩 Flag Question</button>
+    <a href="admin.html" id="adminBackBtn" style="display:none;color:#80bf8a;font-size:0.85rem;text-decoration:none;border:1px solid #80bf8a;padding:4px 12px;border-radius:6px;white-space:nowrap">← Dashboard</a>
+  </div>
+  <script>if (sessionStorage.getItem('userRole') === 'admin') document.getElementById('adminBackBtn').style.display = '';</script>
+
+  <!-- Calculator Popup -->
+  <div id="calc-popup">
+    <div class="calc-popup-header" id="calc-drag-handle">
+      <span>🖩 Desmos Graphing Calculator</span>
+      <button id="calc-close">✕</button>
+    </div>
+    <div id="calculator"></div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="test-layout" id="test-layout">
+
+    <!-- Question Panel -->
+    <div class="question-panel">
+      <div class="question-meta" id="question-meta"></div>
+
+      <div class="question-passage" id="question-passage" style="display:none;">
+        <div class="passage-label">📄 Article / Passage</div>
+        <div class="passage-body" id="passage-body"></div>
+      </div>
+
+      <div class="question-text" id="question-text"></div>
+      <img id="question-image" src="" alt="Question diagram" style="display:none;max-width:100%;margin:12px 0;border-radius:6px;" />
+
+      <ul class="choices" id="choices-list"></ul>
+
+      <div class="nav-footer">
+        <button class="btn-prev" id="btn-prev">← Previous</button>
+        <span class="question-counter" id="question-counter"></span>
+        <button class="btn-next" id="btn-next">Next →</button>
+      </div>
+    </div>
+
+    <!-- Question Grid -->
+    <div class="question-grid-panel">
+      <h3>Questions</h3>
+      <div class="question-grid" id="grid"></div>
+      <button class="submit-btn" id="submit-btn">Submit Section</button>
+    </div>
+
+  </div>
+
+  <!-- Section Title Screen -->
+  <div id="section-title-screen" style="display:none;">
+    <div class="section-title-card">
+      <div class="section-title-tag" id="title-tag">Section 2 of 4</div>
+      <h1 id="title-name"></h1>
+      <div class="section-title-meta">
+        <div class="title-meta-item">
+          <div class="title-meta-val" id="title-questions"></div>
+          <div class="title-meta-lbl">Questions</div>
+        </div>
+        <div class="title-meta-divider"></div>
+        <div class="title-meta-item">
+          <div class="title-meta-val" id="title-time"></div>
+          <div class="title-meta-lbl">Minutes</div>
+        </div>
+      </div>
+      <p class="section-title-desc" id="title-desc"></p>
+      <button class="begin-btn" id="begin-btn">Begin Section →</button>
+    </div>
+  </div>
+
+  <style>
+    #section-title-screen {
+      position: fixed;
+      inset: 0;
+      background: #0e1c5e;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .section-title-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 3rem 3.5rem;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    }
+    .section-title-tag {
+      display: inline-block;
+      background: #eeecff;
+      color: #6c63ff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 0.3rem 0.9rem;
+      border-radius: 99px;
+      margin-bottom: 1.2rem;
+    }
+    .section-title-card h1 {
+      font-size: 2rem;
+      color: #0e1c5e;
+      margin-bottom: 1.5rem;
+      font-weight: 800;
+    }
+    .section-title-meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .title-meta-item { text-align: center; }
+    .title-meta-val {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #6c63ff;
+    }
+    .title-meta-lbl {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .title-meta-divider {
+      width: 1px;
+      height: 40px;
+      background: #eee;
+    }
+    .section-title-desc {
+      font-size: 0.93rem;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .begin-btn {
+      background: #6c63ff;
+      color: #fff;
+      border: none;
+      padding: 0.85rem 2.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+    .begin-btn:hover { background: #5a52e0; }
+  </style>
+
+  <script src="js/calculator.js"></script>
+  <script src="js/practice-tests.js"></script>
+</body>
+</html>

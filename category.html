@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAT Prep – Practice</title>
+  <link rel="stylesheet" href="css/reset.css?v=2026-03-15" />
+  <link rel="stylesheet" href="css/style.css?v=2026-03-15" />
+  <link rel="stylesheet" href="category.css?v=2026-03-15" />
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<script>requireAuth();</script>
+
+  <nav class="navbar">
+    <div class="logo"><img src="logo.webp" alt="Logo" style="height:36px;width:auto;display:block;flex-shrink:0;"> SAT<span>Prep</span></div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="practice-tests.html">Practice Tests</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="topic-questions.html" class="active">Topic Questions</a></li>
+      <li><a href="account.html">Account</a></li>
+      <li id="adminNavLink" class="hidden"><a href="admin.html">Admin Dashboard</a></li>
+    </ul>
+    <script>if (sessionStorage.getItem('userRole') === 'admin') document.getElementById('adminNavLink').classList.remove('hidden');</script>
+    <div class="notif-wrap" id="notifWrap">
+      <button class="notif-bell" id="notifBell" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge hidden" id="notifBadge"></span>
+      </button>
+      <div class="notif-pane hidden" id="notifPane">
+        <div class="notif-pane-head">
+          <span class="notif-pane-title">Notifications</span>
+          <button class="notif-mark-all" id="notifMarkAll">Mark all read</button>
+        </div>
+        <div class="notif-prefs">
+          <label class="notif-pref-label"><input type="checkbox" id="prefQuizReminders" /><span>Quiz Reminders</span></label>
+          <label class="notif-pref-label"><input type="checkbox" id="prefWeeklyReports" /><span>Weekly Reports</span></label>
+        </div>
+        <ul class="notif-list" id="notifList">
+          <li class="notif-empty">You're all caught up!</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-signout" onclick="logout()">Sign Out</button>
+  </nav>
+
+  <div class="page-container">
+
+    <!-- Header -->
+    <div class="cat-header">
+      <a href="topic-questions.html" class="back-link">← Back to Topics</a>
+      <h1 id="cat-title">Category</h1>
+      <p id="cat-subject"></p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input id="searchInput" class="search-input" type="text" placeholder="Search questions…" oninput="applyFilters()" />
+        </div>
+        <select id="diffFilter" class="filter-select" onchange="applyFilters()">
+          <option value="">All Difficulties</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <select id="statusFilter" class="filter-select" onchange="applyFilters()">
+          <option value="">All Statuses</option>
+          <option value="unattempted">Unattempted</option>
+          <option value="correct">Correct</option>
+          <option value="incorrect">Incorrect</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <span id="resultCount" class="result-count"></span>
+        <select id="pageSizeSelect" class="filter-select" onchange="onPageSizeChange()">
+          <option value="25">25 / page</option>
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Column headers -->
+    <div class="list-header">
+      <span class="col-num">#</span>
+      <span class="col-preview">Question</span>
+      <span class="col-diff">Difficulty</span>
+      <span class="col-status">Status</span>
+      <span class="col-action"></span>
+    </div>
+
+    <!-- Question rows -->
+    <div id="questionList" class="question-list"></div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" id="paginationBar"></div>
+
+  </div>
+
+  <!-- Question Modal -->
+  <div class="q-modal-overlay hidden" id="modalOverlay" onclick="closeModal(event)">
+    <div class="q-modal">
+      <div class="q-modal-header">
+        <div class="q-modal-meta">
+          <span id="modalQNum" class="modal-qnum"></span>
+          <span id="modalDiff" class="diff-badge"></span>
+        </div>
+        <button class="q-modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="q-modal-body">
+        <p id="modalPassage" class="modal-passage"></p>
+        <img id="modalImage" src="" alt="Question diagram" style="display:none;max-width:100%;margin:10px 0;border-radius:6px;" />
+        <p id="modalQuestion" class="modal-question"></p>
+        <div id="modalChoices" class="modal-choices"></div>
+      </div>
+      <div class="q-modal-footer">
+        <button id="submitBtn" class="btn-check" onclick="submitAnswer()">Check Answer</button>
+        <div id="modalFeedback" class="modal-feedback hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/accessibility.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="category.js"></script>
+</body>
+</html>

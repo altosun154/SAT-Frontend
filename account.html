@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAT Prep – Account</title>
+  <link rel="stylesheet" href="css/reset.css?v=2026-03-15" />
+  <link rel="stylesheet" href="css/style.css?v=2026-03-15" />
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<script>requireAuth();</script>
+
+  <nav class="navbar">
+    <div class="logo"><img src="logo.webp" alt="Logo" style="height:36px;width:auto;display:block;flex-shrink:0;"> SAT<span>Prep</span></div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="practice-tests.html">Practice Tests</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="topic-questions.html">Topic Questions</a></li>
+      <li><a href="account.html" class="active">Account</a></li>
+    </ul>
+    <script>
+      if (sessionStorage.getItem('userRole') === 'admin') {
+        document.getElementById('navLinks').innerHTML =
+          '<li><a href="admin.html">Dashboard</a></li>' +
+          '<li><a href="index.html">Student View</a></li>' +
+          '<li><a href="account.html" class="active">Account</a></li>';
+      }
+    </script>
+    <div class="notif-wrap" id="notifWrap">
+
+      <button class="notif-bell" id="notifBell" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge hidden" id="notifBadge"></span>
+      </button>
+      <div class="notif-pane hidden" id="notifPane">
+        <div class="notif-pane-head">
+          <span class="notif-pane-title">Notifications</span>
+          <button class="notif-mark-all" id="notifMarkAll">Mark all read</button>
+        </div>
+        <div class="notif-prefs">
+          <label class="notif-pref-label"><input type="checkbox" id="prefQuizReminders" /><span>Quiz Reminders</span></label>
+          <label class="notif-pref-label"><input type="checkbox" id="prefWeeklyReports" /><span>Weekly Reports</span></label>
+        </div>
+        <ul class="notif-list" id="notifList">
+          <li class="notif-empty">You're all caught up!</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-signout" onclick="logout()">Sign Out</button>
+  </nav>
+
+  <div class="page-container">
+    <div class="placeholder-hero">
+      <h1>Account</h1>
+      <p>Manage your profile, settings, and sign-in preferences.</p>
+    </div>
+    <div class="placeholder-cards">
+      <div class="card" id="profile-card" onclick="openProfileModal()">
+        <h3>Profile</h3>
+        <p>Update your name and email address.</p>
+      </div>
+      <div class="card" id="settings-card" onclick="openSettingsModal()">
+        <h3>Settings</h3>
+        <p>Adjust notifications, accessibility options, and preferences.</p>
+      </div>
+      <div class="card" id="security-card" onclick="openSecurityModal()">
+        <h3>Security</h3>
+        <p>Set up two-factor authentication for your account.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+      </div>
+      <form id="settings-form" class="settings-form profile-form">
+        <!-- Notifications Section -->
+        <div class="settings-section">
+          <h3>Notifications</h3>
+          <div class="form-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="emailNotifications" name="emailNotifications" />
+              <span>Email Notifications</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Accessibility Section -->
+        <div class="settings-section">
+          <h3>Accessibility</h3>
+          <div class="form-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="darkMode" name="darkMode" />
+              <span>Dark Mode</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="largeText" name="largeText" />
+              <span>Large Text</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="highContrast" name="highContrast" />
+              <span>High Contrast</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Preferences Section -->
+        <div class="settings-section">
+          <h3>Preferences</h3>
+          <div class="form-group">
+            <label for="language">Language</label>
+            <select id="language" name="language">
+              <option value="english">English</option>
+              <option value="spanish">Spanish</option>
+              <option value="french">French</option>
+              <option value="chinese">Chinese</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="learningPace">Learning Pace</label>
+            <select id="learningPace" name="learningPace">
+              <option value="slow">Slow (Detailed)</option>
+              <option value="moderate">Moderate (Balanced)</option>
+              <option value="fast">Fast (Condensed)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="studyGoal">Weekly Study Goal (hours)</label>
+            <input type="number" id="studyGoal" name="studyGoal" min="1" max="50" placeholder="Enter hours per week" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeSettingsModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Security Modal -->
+  <div id="security-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Two-Factor Authentication</h2>
+        <button class="modal-close" onclick="closeSecurityModal()">&times;</button>
+      </div>
+
+      <div class="security-body">
+        <!-- State: 2FA disabled -->
+        <div id="mfa-disabled-view" class="settings-section hidden">
+          <p>Add an extra layer of security to your account by requiring a code from an authenticator app when you sign in.</p>
+          <div class="form-actions">
+            <button type="button" class="btn btn-primary" id="startEnrollBtn">Enable Two-Factor Authentication</button>
+          </div>
+        </div>
+
+        <!-- State: enrollment in progress -->
+        <div id="mfa-enroll-view" class="settings-section hidden">
+          <p>Scan this QR code with your authenticator app (e.g. Google Authenticator, Authy):</p>
+          <div id="mfa-qr-container" class="mfa-qr-container"></div>
+          <p class="mfa-manual-label">Can't scan it? Enter this code manually:</p>
+          <code id="mfa-manual-secret" class="mfa-manual-secret"></code>
+
+          <form id="mfa-confirm-form" class="settings-form">
+            <div class="form-group">
+              <label for="mfaEnrollCode">Enter the 6-digit code from your app</label>
+              <input type="text" id="mfaEnrollCode" name="mfaEnrollCode" inputmode="numeric" maxlength="6" placeholder="123456" required />
+              <p class="field-error" id="mfaEnrollCodeError">Please enter the 6-digit code.</p>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" id="cancelEnrollBtn">Cancel</button>
+              <button type="submit" class="btn btn-primary">Confirm & Enable</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- State: 2FA enabled -->
+        <div id="mfa-enabled-view" class="settings-section hidden">
+          <p class="mfa-status-on">Two-factor authentication is <strong>enabled</strong> on your account.</p>
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline-danger" id="showDisableFormBtn">Disable Two-Factor Authentication</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disable 2FA Confirmation Dialog (nested on top of Security modal) -->
+  <div id="disable-2fa-dialog" class="modal hidden">
+    <div class="confirm-dialog">
+      <h3>Turn off two-factor authentication?</h3>
+      <p>Turning off two-factor authentication will make your account less secure.</p>
+      <form id="mfa-disable-form">
+        <div class="form-group">
+          <label for="mfaDisablePassword">Password</label>
+          <input type="password" id="mfaDisablePassword" name="mfaDisablePassword" autocomplete="current-password" required />
+          <p class="field-error" id="mfaDisableError"></p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="cancelDisableBtn">Cancel</button>
+          <button type="submit" class="btn btn-outline-danger">Turn off</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Profile</h2>
+        <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+      </div>
+      <form id="profile-form" class="profile-form">
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter your email address" required />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeProfileModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2026 SAT Prep Platform</p>
+  </footer>
+
+  <script src="js/accessibility.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/security.js"></script>
+
+</body>
+</html>

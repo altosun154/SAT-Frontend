@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAT Prep – Admin Dashboard</title>
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<script>requireAuth();</script>
+
+  <nav class="navbar">
+    <div class="logo"><img src="logo.webp" alt="Logo" style="height:36px;vertical-align:middle;margin-right:8px;"> SAT<span>Prep</span> <span class="admin-badge">Admin</span></div>
+    <ul class="nav-links">
+      <li><a href="admin.html" class="active">Dashboard</a></li>
+      <li><a href="index.html">Student View</a></li>
+      <li><a href="account.html">Account</a></li>
+    </ul>
+    <div class="notif-wrap" id="notifWrap">
+      <button class="notif-bell" id="notifBell" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge hidden" id="notifBadge"></span>
+      </button>
+      <div class="notif-pane hidden" id="notifPane">
+        <div class="notif-pane-head">
+          <span class="notif-pane-title">Notifications</span>
+          <button class="notif-mark-all" id="notifMarkAll">Mark all read</button>
+        </div>
+        <ul class="notif-list" id="notifList">
+          <li class="notif-empty">You're all caught up!</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-signout" onclick="logout()">Sign Out</button>
+  </nav>
+
+  <div class="admin-shell">
+
+    <!-- ── Summary Stats Bar ─────────────────────────── -->
+    <div class="admin-stats-bar">
+      <div class="stat-chip">
+        <span class="stat-chip-val" id="statTotalUsers">—</span>
+        <span class="stat-chip-lbl">Total Students</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-chip-val" id="statActiveTests">—</span>
+        <span class="stat-chip-lbl">Active Test Assignments</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-chip-val" id="statAvgScore">—</span>
+        <span class="stat-chip-lbl">Avg. Score</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-chip-val" id="statCompleted">—</span>
+        <span class="stat-chip-lbl">Tests Completed</span>
+      </div>
+    </div>
+
+    <!-- ── Tab Nav ───────────────────────────────────── -->
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab-active" data-tab="accounts" onclick="switchTab('accounts')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Accounts &amp; Progress
+      </button>
+      <button class="admin-tab" data-tab="assign" onclick="switchTab('assign')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 14h4M8 18h8"/></svg>
+        Assign Tests
+      </button>
+      <button class="admin-tab" data-tab="create" onclick="switchTab('create')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Create Account
+      </button>
+      <button class="admin-tab" data-tab="upload" onclick="switchTab('upload')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Test
+      </button>
+      <button class="admin-tab" data-tab="manage" onclick="switchTab('manage')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Manage Tests
+      </button>
+      <button class="admin-tab" data-tab="banks" onclick="switchTab('banks')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Question Banks
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!--  TAB 1: Accounts & Progress                   -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="tab-accounts" class="tab-panel">
+
+      <!-- Toolbar -->
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="userSearch" class="search-input" placeholder="Search by name or email…" oninput="filterUsers()" />
+        </div>
+        <div class="toolbar-filters">
+          <select id="filterStatus" class="filter-select" onchange="filterUsers()">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <select id="filterSort" class="filter-select" onchange="filterUsers()">
+            <option value="name">Sort: Name</option>
+            <option value="score">Sort: Score</option>
+            <option value="activity">Sort: Last Active</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Accounts Table -->
+      <div class="table-wrap">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Math Score</th>
+              <th>R&amp;W Score</th>
+              <th>Total</th>
+              <th>Tests Assigned</th>
+              <th>Last Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Populated by admin.js -->
+          </tbody>
+        </table>
+        <div class="table-empty hidden" id="usersEmpty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <p>No students found.</p>
+        </div>
+      </div>
+
+    </div><!-- /tab-accounts -->
+
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!--  TAB 2: Assign Tests                          -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="tab-assign" class="tab-panel hidden">
+
+      <div class="assign-layout">
+
+        <!-- Left: Assignment Form -->
+        <div class="assign-form-card card">
+          <h2 class="assign-form-title">New Assignment</h2>
+
+          <form id="assignForm" onsubmit="submitAssignment(event)">
+
+            <div class="form-group">
+              <label for="assignTest">Test</label>
+              <select id="assignTest" required>
+                <option value="">— Select a test —</option>
+                <!-- Populated by admin.js -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Assign To</label>
+              <div class="assign-target-toggle">
+                <button type="button" class="assign-toggle-btn assign-toggle-active" onclick="setAssignTarget('individual')">Individual</button>
+                <button type="button" class="assign-toggle-btn" onclick="setAssignTarget('group')">Group / Class</button>
+                <button type="button" class="assign-toggle-btn" onclick="setAssignTarget('all')">All Students</button>
+              </div>
+            </div>
+
+            <div id="assignTargetIndividual" class="form-group">
+              <label for="assignStudent">Student</label>
+              <select id="assignStudent">
+                <option value="">— Select a student —</option>
+                <!-- Populated by admin.js -->
+              </select>
+            </div>
+
+            <div id="assignTargetGroup" class="form-group hidden">
+              <label for="assignGroup">Group / Class</label>
+              <select id="assignGroup">
+                <option value="">— Select a group —</option>
+                <!-- Populated by admin.js -->
+              </select>
+            </div>
+
+            <div id="assignTargetAll" class="form-group hidden">
+              <p class="assign-all-note">This test will be assigned to <strong>all</strong> active students.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="assignDueDate">Due Date <span class="optional">(optional)</span></label>
+              <input type="date" id="assignDueDate" />
+            </div>
+
+            <div class="form-group">
+              <label for="assignNote">Note to Student <span class="optional">(optional)</span></label>
+              <textarea id="assignNote" rows="3" placeholder="E.g. Focus on the math section…"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-outline" onclick="resetAssignForm()">Clear</button>
+              <button type="submit" class="btn btn-primary">Assign Test</button>
+            </div>
+
+          </form>
+        </div><!-- /assign-form-card -->
+
+        <!-- Right: Recent Assignments -->
+        <div class="assign-history-card">
+          <div class="assign-history-header">
+            <h2 class="assign-form-title">Recent Assignments</h2>
+            <input type="text" id="assignSearch" class="search-input" placeholder="Search…" oninput="filterAssignments()" style="max-width:200px" />
+          </div>
+
+          <div class="table-wrap">
+            <table class="admin-table" id="assignTable">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Assigned To</th>
+                  <th>Due</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="assignTableBody">
+                <!-- Populated by admin.js -->
+              </tbody>
+            </table>
+            <div class="table-empty hidden" id="assignEmpty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+              <p>No assignments yet.</p>
+            </div>
+          </div>
+        </div><!-- /assign-history-card -->
+
+      </div><!-- /assign-layout -->
+
+    </div><!-- /tab-assign -->
+
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!--  TAB 3: Create Account                        -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="tab-create" class="tab-panel hidden">
+      <div class="assign-layout">
+        <div class="assign-form-card card" style="max-width:480px">
+          <h2 class="assign-form-title">Create Student Account</h2>
+          <form id="createAccountForm" onsubmit="submitCreateAccount(event)">
+            <div class="assign-field">
+              <label class="assign-label">Full Name</label>
+              <input type="text" id="createName" class="assign-input" placeholder="e.g. Jane Smith" required />
+            </div>
+            <div class="assign-field">
+              <label class="assign-label">Email</label>
+              <input type="email" id="createEmail" class="assign-input" placeholder="student@email.com" required />
+            </div>
+            <div class="assign-field">
+              <label class="assign-label">Password</label>
+              <input type="password" id="createPassword" class="assign-input" placeholder="Temporary password" required minlength="6" />
+            </div>
+            <button type="submit" class="assign-submit-btn" id="createSubmitBtn">Create Account</button>
+          </form>
+        </div>
+      </div>
+    </div><!-- /tab-create -->
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!--  TAB 4: Upload Test                           -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="tab-upload" class="tab-panel hidden">
+      <div class="assign-layout">
+        <div class="assign-form-card card" style="max-width:480px">
+          <h2 class="assign-form-title">Upload Test</h2>
+          <p style="font-size:0.88rem;color:#777;margin:-8px 0 20px">Select a .pdf or .docx file following the practice-test template (section headers, numbered questions with a difficulty tag, A–D choices or a grid-in marker, and a trailing answer key).</p>
+
+          <form id="uploadTestForm" onsubmit="uploadTest(event)">
+
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('uploadTestFile').click()" role="button" tabindex="0" aria-label="Select PDF or Word file">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <p class="upload-zone-hint">Click to select a <strong>.pdf</strong> or <strong>.docx</strong> file</p>
+              <span class="upload-file-name" id="uploadFileName">No file selected</span>
+              <input type="file" id="uploadTestFile" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="onUploadFileChange()" />
+            </div>
+
+            <div id="uploadResult" class="upload-result hidden"></div>
+
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <button type="button" class="assign-submit-btn" style="background:#fff;color:#152a8c;border:1px solid #d0d7e0;flex:0 0 auto;padding:11px 20px" onclick="resetUploadForm()">Clear</button>
+              <button type="submit" class="assign-submit-btn" id="uploadTestBtn">Upload Test</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div><!-- /tab-upload -->
+
+    <!-- ══════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!--  TAB 6: Manage Tests                          -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="tab-manage" class="tab-panel hidden">
+
+      <div class="panel-toolbar">
+        <div style="min-width:280px">
+          <select id="manageTestSelect" class="filter-select" onchange="onManageTestChange()" style="width:100%">
+            <option value="">— Select a test to manage —</option>
+            <!-- Populated by admin-manage-tests.js -->
+          </select>
+        </div>
+        <button type="button" class="row-action-btn row-action-danger" id="deleteTestBtn" onclick="deleteCurrentTest()" disabled>Delete Test</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table" id="manageQuestionsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Subject</th>
+              <th>Difficulty</th>
+              <th>Type</th>
+              <th>Answer</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="manageQuestionsTableBody">
+            <!-- Populated by admin-manage-tests.js -->
+          </tbody>
+        </table>
+        <div class="table-empty" id="manageQuestionsEmpty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <p id="manageQuestionsEmptyMsg">Select a test above to view and edit its questions.</p>
+        </div>
+      </div>
+
+    </div><!-- /tab-manage -->
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!--  TAB: Question Banks                          -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="tab-banks" class="tab-panel hidden">
+      <div class="panel-toolbar" style="flex-wrap:wrap;gap:10px">
+        <span class="panel-title" style="flex:0 0 auto">Question Banks</span>
+        <div style="display:flex;gap:8px;flex:1;min-width:0;flex-wrap:wrap;align-items:center">
+          <input id="banksSearch" class="assign-input" style="flex:1;min-width:160px;max-width:280px" placeholder="Search by file or topic…" oninput="filterBanks()" />
+          <select id="banksSubjectFilter" class="filter-select" onchange="filterBanks()">
+            <option value="">All Subjects</option>
+          </select>
+          <select id="banksTopicFilter" class="filter-select" onchange="filterBanks()">
+            <option value="">All Topics</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;flex:0 0 auto">
+          <button class="btn btn-outline" onclick="loadQuestionBanks()">↻ Refresh</button>
+          <input type="file" id="importFile" accept=".docx,.pdf" style="display:none" onchange="onImportFileSelected()">
+          <div>
+            <button class="btn btn-primary" onclick="openImportModalForUpload()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              Import
+            </button>
+            <div class="import-hint">Accepts .docx and .pdf</div>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="banksTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Subject</th>
+              <th>Topic</th>
+              <th>Skill</th>
+              <th>Questions</th>
+              <th></th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th>Imported</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="banksTableBody"></tbody>
+        </table>
+        <div class="table-empty hidden" id="banksEmpty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <p id="banksEmptyMsg">No question banks imported yet.</p>
+          <button class="btn btn-primary" onclick="openImportModalForUpload()" id="banksEmptyImportBtn" style="margin-top:8px">Import Questions</button>
+        </div>
+      </div>
+    </div><!-- /tab-banks -->
+
+  </div><!-- /admin-shell -->
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--  Student Progress Modal                       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="progressModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="progressModalTitle">
+    <div class="modal-content modal-wide">
+      <div class="modal-header">
+        <h2 id="progressModalTitle">Student Progress</h2>
+        <button class="modal-close" onclick="closeProgressModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="progress-modal-body" id="progressModalBody">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--  Edit Question Modal                          -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="editQuestionModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editQuestionModalTitle">
+    <div class="modal-content modal-wide">
+      <div class="modal-header">
+        <h2 id="editQuestionModalTitle">Edit Question</h2>
+        <button class="modal-close" onclick="closeEditQuestionModal()" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="editQuestionForm" onsubmit="submitEditQuestion(event)" style="padding:24px">
+
+        <div class="form-group">
+          <label>Question Type</label>
+          <div class="assign-target-toggle">
+            <button type="button" class="assign-toggle-btn assign-toggle-active" data-qtype="mcq" onclick="setEditQuestionType('mcq')">Multiple Choice</button>
+            <button type="button" class="assign-toggle-btn" data-qtype="gridin" onclick="setEditQuestionType('gridin')">Grid-In (Student-Produced)</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editQText">Question Text</label>
+          <textarea id="editQText" rows="3" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="editQPassage">Passage <span class="optional">(optional)</span></label>
+          <textarea id="editQPassage" rows="3"></textarea>
+        </div>
+
+        <div id="editQChoicesGroup">
+          <div class="form-group">
+            <label for="editQChoiceA">Choice A</label>
+            <input type="text" id="editQChoiceA" />
+          </div>
+          <div class="form-group">
+            <label for="editQChoiceB">Choice B</label>
+            <input type="text" id="editQChoiceB" />
+          </div>
+          <div class="form-group">
+            <label for="editQChoiceC">Choice C</label>
+            <input type="text" id="editQChoiceC" />
+          </div>
+          <div class="form-group">
+            <label for="editQChoiceD">Choice D</label>
+            <input type="text" id="editQChoiceD" />
+          </div>
+        </div>
+
+        <div class="form-group" id="editQAnswerMcqGroup">
+          <label for="editQAnswerSelect">Correct Answer</label>
+          <select id="editQAnswerSelect">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+
+        <div class="form-group hidden" id="editQAnswerTextGroup">
+          <label for="editQAnswerText">Correct Answer</label>
+          <input type="text" id="editQAnswerText" placeholder="e.g. 12 or 3.5" />
+        </div>
+
+        <div class="form-group">
+          <label for="editQSubject">Subject / Module</label>
+          <select id="editQSubject">
+            <option value="Section 1, Module 1: Reading and Writing">Reading &amp; Writing — Module 1</option>
+            <option value="Section 1, Module 2: Reading and Writing">Reading &amp; Writing — Module 2</option>
+            <option value="Section 2, Module 1: Math">Math — Module 1</option>
+            <option value="Section 2, Module 2: Math">Math — Module 2</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="editQDifficulty">Difficulty</label>
+          <select id="editQDifficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="editQSkill">Skill / Topic <span class="optional">(optional)</span></label>
+          <input type="text" id="editQSkill" placeholder="e.g. Algebra, Reading Comprehension" />
+        </div>
+
+        <div class="form-group">
+          <label for="editQImageUrl">Image URL <span class="optional">(optional)</span></label>
+          <input type="text" id="editQImageUrl" placeholder="https://…" />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeEditQuestionModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="editQSaveBtn">Save Changes</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--  Import Review Modal                          -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="importModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+    <div class="import-modal-content">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h2 id="importModalTitle">Review Import</h2>
+          <span id="importModalBadge"></span>
+        </div>
+        <button class="modal-close" id="importModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div id="importModalBody" class="import-modal-body"></div>
+      <div id="importModalFooter" class="import-modal-footer"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2026 SAT Prep Platform — Admin View</p>
+  </footer>
+
+  <script src="js/accessibility.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/admin-users.js"></script>
+  <script src="js/admin-assignments.js"></script>
+  <script src="js/admin-upload.js"></script>
+  <script src="js/admin-manage-tests.js"></script>
+  <script src="js/admin-import.js"></script>
+  <script src="js/admin-question-banks.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+</html>

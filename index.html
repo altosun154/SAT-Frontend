@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAT Prep – Home</title>
+  <link rel="stylesheet" href="css/reset.css?v=2026-03-15" />
+  <link rel="stylesheet" href="css/style.css?v=2026-03-15" />
+  <link rel="stylesheet" href="index.css?v=2026-03-15" />
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<script>requireAuth();</script>
+
+  <nav class="navbar">
+    <div class="logo"><img src="logo.webp" alt="Logo" style="height:36px;width:auto;display:block;flex-shrink:0;"> SAT<span>Prep</span></div>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="account.html">Account</a></li>
+      <li id="adminNavLink" class="hidden"><a href="admin.html">Admin Dashboard</a></li>
+    </ul>
+    <script>
+      if (sessionStorage.getItem('userRole') === 'admin') {
+        document.getElementById('adminNavLink').classList.remove('hidden');
+      }
+    </script>
+    <div class="notif-wrap" id="notifWrap">
+      <button class="notif-bell" id="notifBell" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge hidden" id="notifBadge"></span>
+      </button>
+      <div class="notif-pane hidden" id="notifPane">
+        <div class="notif-pane-head">
+          <span class="notif-pane-title">Notifications</span>
+          <button class="notif-mark-all" id="notifMarkAll">Mark all read</button>
+        </div>
+        <div class="notif-prefs">
+          <label class="notif-pref-label"><input type="checkbox" id="prefQuizReminders" /><span>Quiz Reminders</span></label>
+          <label class="notif-pref-label"><input type="checkbox" id="prefWeeklyReports" /><span>Weekly Reports</span></label>
+        </div>
+        <ul class="notif-list" id="notifList">
+          <li class="notif-empty">You're all caught up!</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-signout" onclick="logout()">Sign Out</button>
+  </nav>
+
+  <main class="home-main">
+
+    <!-- Left: primary content -->
+    <div class="home-content">
+
+      <!-- Section 1: Assigned Tests -->
+      <section class="home-section">
+        <div class="section-header">
+          <h2>Your Assigned Tests</h2>
+          <div class="toggle-group">
+            <button class="toggle-btn toggle-active" onclick="setToggle(this, 'tests-active', 'tests-past')">Active</button>
+            <button class="toggle-btn" onclick="setToggle(this, 'tests-past', 'tests-active')">Past</button>
+          </div>
+        </div>
+        <div id="tests-active">
+          <div class="assigned-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M8 2v4M16 2v4M3 10h18"/>
+            </svg>
+            <p>No active tests assigned.</p>
+          </div>
+        </div>
+        <div id="tests-past" class="hidden">
+          <div class="assigned-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M8 2v4M16 2v4M3 10h18"/>
+            </svg>
+            <p>No past tests found.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Practice -->
+      <section class="home-section">
+        <div class="section-header">
+          <h2>Practice &amp; Prepare</h2>
+          <div class="toggle-group">
+            <button class="toggle-btn toggle-active" onclick="setToggle(this, 'practice-active', 'practice-past')">Active</button>
+            <button class="toggle-btn" onclick="setToggle(this, 'practice-past', 'practice-active')">Past</button>
+          </div>
+        </div>
+        <div id="practice-active">
+          <div class="practice-cards">
+            <a href="topic-questions.html" class="practice-card">
+              <div class="practice-card-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              </div>
+              <div class="practice-card-text">
+                <h3>Practice Problems</h3>
+                <p>Work through targeted questions by topic — Math or Reading &amp; Writing.</p>
+              </div>
+              <span class="practice-card-arrow">→</span>
+            </a>
+            <a href="practice-tests.html" class="practice-card">
+              <div class="practice-card-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="practice-card-text">
+                <h3>Full-Length Practice Test</h3>
+                <p>Simulate a real SAT with a timed, full-length practice test.</p>
+              </div>
+              <span class="practice-card-arrow">→</span>
+            </a>
+          </div>
+        </div>
+        <div id="practice-past" class="hidden">
+          <div id="practiceHistory"></div>
+        </div>
+      </section>
+
+    </div><!-- /home-content -->
+
+    <!-- Right: motivational sidebar -->
+    <aside class="home-sidebar">
+
+      <!-- Goal Card -->
+      <div class="goal-card">
+        <div class="goal-card-header">
+          <span class="goal-card-title">Score Goals</span>
+          <button class="goal-edit-btn" id="goalEditBtn">Edit</button>
+        </div>
+
+        <!-- Total score summary -->
+        <div class="goal-total">
+          <div class="goal-total-scores">
+            <div class="goal-total-block">
+              <span class="goal-total-val" id="totalCurrentScore">—</span>
+              <span class="goal-total-lbl">Current</span>
+            </div>
+            <div class="goal-total-arrow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </div>
+            <div class="goal-total-block">
+              <span class="goal-total-val goal-total-target" id="totalTargetScore">—</span>
+              <span class="goal-total-lbl">Target</span>
+            </div>
+          </div>
+          <div class="goal-total-bar-track">
+            <div class="goal-total-bar-fill" id="totalBarFill" style="width:0%"></div>
+            <div class="goal-total-bar-marker hidden" id="totalBarMarker"></div>
+          </div>
+          <div class="goal-total-gap" id="totalGapText">Set subject targets to see your total goal.</div>
+        </div>
+
+        <!-- Per-subject detail -->
+        <div class="goal-subject-divider"></div>
+        <div class="goal-subject-tabs">
+          <button class="goal-subject-tab goal-subject-tab-active" data-subject="math">Math</button>
+          <button class="goal-subject-tab" data-subject="rw">Reading & Writing</button>
+        </div>
+        <div class="goal-scores">
+          <div class="goal-score-block">
+            <span class="goal-score-val" id="currentScore">—</span>
+            <span class="goal-score-lbl">Current</span>
+          </div>
+          <div class="goal-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </div>
+          <div class="goal-score-block">
+            <span class="goal-score-val goal-score-target" id="targetScore">—</span>
+            <span class="goal-score-lbl">Target</span>
+          </div>
+        </div>
+        <div class="goal-bar-wrap">
+          <div class="goal-bar-track">
+            <div class="goal-bar-fill" id="goalBarFill" style="width:0%"></div>
+            <div class="goal-bar-marker hidden" id="goalBarMarker"></div>
+          </div>
+          <div class="goal-bar-ends">
+            <span>200</span><span>800</span>
+          </div>
+        </div>
+        <div class="goal-gap-text" id="goalGapText">Set a target to track your progress.</div>
+        <div class="goal-edit-row hidden" id="goalEditRow">
+          <input type="number" id="goalInput" min="200" max="800" step="10" placeholder="e.g. 700" />
+          <button id="goalSaveBtn">Save</button>
+        </div>
+      </div>
+
+      <div class="streak-card">
+        <div class="streak-left">
+          <span class="streak-flame">🔥</span>
+          <div>
+            <div class="streak-count" id="streakCount">0</div>
+            <div class="streak-label">day streak</div>
+          </div>
+        </div>
+        <div class="streak-divider"></div>
+        <div class="streak-stats">
+          <div class="streak-stat">
+            <span class="streak-stat-val" id="statTotal">0</span>
+            <span class="streak-stat-lbl">questions answered</span>
+          </div>
+          <div class="streak-stat">
+            <span class="streak-stat-val" id="statSessions">0</span>
+            <span class="streak-stat-lbl">tests completed</span>
+          </div>
+        </div>
+        <div class="streak-message" id="streakMessage">Start practicing to build your streak!</div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-header">Recent Activity</div>
+        <ul class="activity-list" id="activityList">
+          <li class="activity-empty">No activity yet — jump into a practice session!</li>
+        </ul>
+      </div>
+
+      <!-- Score Trend -->
+      <div class="trend-card" id="trendCard" style="display:none">
+        <div class="trend-header">
+          <span class="trend-title">Score Trend</span>
+          <span class="trend-delta" id="trendDelta"></span>
+        </div>
+        <svg id="trendChart" class="trend-svg" viewBox="0 0 220 60" preserveAspectRatio="none"></svg>
+        <div class="trend-labels" id="trendLabels"></div>
+      </div>
+
+      <!-- Weak Skills -->
+      <div class="weak-card" id="weakCard" style="display:none">
+        <div class="trend-header">
+          <span class="trend-title">Needs Work</span>
+        </div>
+        <ul class="weak-list" id="weakList"></ul>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Past Test Review Modal -->
+  <div id="pastReviewModal" class="past-review-modal" role="dialog" aria-modal="true" aria-labelledby="prTitle">
+    <div class="past-review-backdrop" onclick="closePastReview()"></div>
+    <div class="past-review-panel">
+
+      <div class="past-review-header">
+        <div class="past-review-title-group">
+          <h2 class="past-review-title" id="prTitle">Full Practice Test</h2>
+          <span class="past-review-date" id="prDate"></span>
+        </div>
+        <button class="past-review-close" onclick="closePastReview()" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Overview Stats (also act as filter buttons) -->
+      <div class="past-overview-grid">
+        <button class="past-overview-stat past-overview-incorrect" id="prTabIncorrect" onclick="switchReviewTab('incorrect')">
+          <span class="past-overview-val" id="prIncorrect">0</span>
+          <span class="past-overview-lbl">Wrong</span>
+        </button>
+        <button class="past-overview-stat past-overview-skipped" id="prTabSkipped" onclick="switchReviewTab('skipped')">
+          <span class="past-overview-val" id="prSkipped">0</span>
+          <span class="past-overview-lbl">Skipped</span>
+        </button>
+        <button class="past-overview-stat past-overview-correct" id="prTabCorrect" onclick="switchReviewTab('correct')">
+          <span class="past-overview-val" id="prCorrect">0</span>
+          <span class="past-overview-lbl">Correct</span>
+        </button>
+        <div class="past-overview-stat past-overview-accuracy">
+          <span class="past-overview-val" id="prAccuracy">0%</span>
+          <span class="past-overview-lbl">Accuracy</span>
+        </div>
+      </div>
+
+      <!-- Quiz Review -->
+      <div id="prQuizSection">
+
+        <div class="pr-quiz-progress-wrap">
+          <div class="pr-quiz-progress-bar-track">
+            <div class="pr-quiz-progress-bar-fill" id="prProgressBar" style="width:0%"></div>
+          </div>
+          <span class="pr-quiz-progress-text" id="prProgress">1 / 1</span>
+        </div>
+
+        <div class="pr-question-card">
+          <div class="pr-question-meta">
+            <span class="pr-subject-tag" id="prSubject"></span>
+          </div>
+          <div class="pr-passage" id="prPassage" style="display:none"></div>
+          <div class="pr-question-text" id="prQuestionText"></div>
+          <div class="pr-choices" id="prChoices"></div>
+        </div>
+
+        <div class="pr-footer">
+          <div class="pr-feedback hidden" id="prFeedback"></div>
+          <div class="pr-footer-btns">
+            <button class="pr-nav-btn" id="prPrev" onclick="reviewPrev()">&#8592; Prev</button>
+            <button class="pr-check-btn" id="prCheckBtn" onclick="checkReviewAnswer()" disabled>Check Answer</button>
+            <button class="pr-nav-btn pr-nav-next hidden" id="prNext" onclick="reviewNext()">Next &#8594;</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/accessibility.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/goal.js"></script>
+  <script src="js/streak.js"></script>
+  <script src="js/past-tests.js"></script>
+  <script src="js/assigned-tests.js"></script>
+</body>
+</html>

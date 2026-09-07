@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAT Prep – Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/reset.css?v=2026-03-14-2" />
+  <link rel="stylesheet" href="css/style.css?v=2026-03-14-2" />
+  <link rel="stylesheet" href="css/results.css?v=2026-03-14-2" />
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<script>requireAuth();</script>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo"><img src="logo.webp" alt="Logo" style="height:36px;width:auto;display:block;flex-shrink:0;"> SAT<span>Prep</span></div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="practice-tests.html">Practice Tests</a></li>
+      <li><a href="results.html" class="active">Results</a></li>
+      <li><a href="topic-questions.html">Topic Questions</a></li>
+      <li><a href="account.html">Account</a></li>
+      <li id="adminNavLink" class="hidden"><a href="admin.html">Admin Dashboard</a></li>
+    </ul>
+    <script>if (sessionStorage.getItem('userRole') === 'admin') document.getElementById('adminNavLink').classList.remove('hidden');</script>
+    <div class="notif-wrap" id="notifWrap">
+      <button class="notif-bell" id="notifBell" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge hidden" id="notifBadge"></span>
+      </button>
+      <div class="notif-pane hidden" id="notifPane">
+        <div class="notif-pane-head">
+          <span class="notif-pane-title">Notifications</span>
+          <button class="notif-mark-all" id="notifMarkAll">Mark all read</button>
+        </div>
+        <div class="notif-prefs">
+          <label class="notif-pref-label"><input type="checkbox" id="prefQuizReminders" /><span>Quiz Reminders</span></label>
+          <label class="notif-pref-label"><input type="checkbox" id="prefWeeklyReports" /><span>Weekly Reports</span></label>
+        </div>
+        <ul class="notif-list" id="notifList">
+          <li class="notif-empty">You're all caught up!</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-signout" onclick="logout()">Sign Out</button>
+  </nav>
+
+  <!-- Tooltip -->
+  <div class="q-tooltip" id="tooltip"></div>
+
+  <div class="page-container">
+
+    <!-- ── Score Hero ──────────────────────────────── -->
+    <div class="results-hero">
+      <div class="results-hero-left">
+        <h2>Test Results</h2>
+        <div class="test-name" id="hero-test-name">Practice Test 1</div>
+        <div class="test-date" id="hero-test-date">—</div>
+      </div>
+
+      <div class="total-score-wrap">
+        <div class="total-score-label">Total Score</div>
+        <div class="total-score" id="hero-total-score">—<span class="total-score-max"> / 1600</span></div>
+      </div>
+
+      <div class="results-hero-meta">
+        <div class="meta-item">
+          <strong id="hero-percentile">—</strong>
+          Estimated Percentile
+        </div>
+        <div class="meta-item">
+          <strong id="hero-time">—</strong>
+          Time Taken
+        </div>
+        <div class="meta-item">
+          <strong id="hero-date">—</strong>
+          Date
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section Score Cards ─────────────────────── -->
+    <div class="section-scores">
+
+      <div class="section-card rw">
+        <h3>Reading &amp; Writing</h3>
+        <div class="section-score-row">
+          <div class="section-score-num" id="rw-score-num">—</div>
+          <div class="section-score-max">/ 800</div>
+        </div>
+        <div class="section-score-bar-wrap">
+          <div class="section-score-bar" id="rw-score-bar" style="width: 0%"></div>
+        </div>
+        <div class="section-stats">
+          <div class="section-stat"><strong id="rw-correct">—</strong> Correct</div>
+          <div class="section-stat"><strong id="rw-incorrect">—</strong> Incorrect</div>
+          <div class="section-stat"><strong id="rw-skipped">—</strong> Skipped</div>
+          <div class="section-stat"><strong id="rw-accuracy">—</strong> Accuracy</div>
+        </div>
+      </div>
+
+      <div class="section-card math">
+        <h3>Math</h3>
+        <div class="section-score-row">
+          <div class="section-score-num" id="math-score-num">—</div>
+          <div class="section-score-max">/ 800</div>
+        </div>
+        <div class="section-score-bar-wrap">
+          <div class="section-score-bar" id="math-score-bar" style="width: 0%"></div>
+        </div>
+        <div class="section-stats">
+          <div class="section-stat"><strong id="math-correct">—</strong> Correct</div>
+          <div class="section-stat"><strong id="math-incorrect">—</strong> Incorrect</div>
+          <div class="section-stat"><strong id="math-skipped">—</strong> Skipped</div>
+          <div class="section-stat"><strong id="math-accuracy">—</strong> Accuracy</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Summary Stats ──────────────────────────── -->
+    <div class="summary-stats">
+      <div class="stat-box" id="correct-btn" onclick="toggleCorrectQuestions()" style="cursor: pointer;">
+        <div class="stat-val">72</div>
+        <div class="stat-lbl">Correct</div>
+      </div>
+      <div class="stat-box" id="incorrect-btn" onclick="toggleIncorrectQuestions()" style="cursor: pointer;">
+        <div class="stat-val">16</div>
+        <div class="stat-lbl">Incorrect</div>
+      </div>
+      <div class="stat-box" id="skipped-btn" onclick="toggleSkippedQuestions()" style="cursor: pointer;">
+        <div class="stat-val">4</div>
+        <div class="stat-lbl">Skipped</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">78%</div>
+        <div class="stat-lbl">Overall Accuracy</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-avg-time">—</div>
+        <div class="stat-lbl">Avg Time / Q</div>
+      </div>
+    </div>
+
+    <!-- ── Correct Questions Section ───────────────── -->
+    <div id="correct-section" class="correct-section hidden">
+      <div class="correct-header">
+        <h3>Correct Questions Review</h3>
+        <button class="correct-close" onclick="toggleCorrectQuestions()">&times;</button>
+      </div>
+      <div class="correct-list" id="correctList"></div>
+    </div>
+
+    <!-- ── Incorrect Questions Section ──────────────── -->
+    <div id="incorrect-section" class="incorrect-section hidden">
+      <div class="incorrect-header">
+        <h3>Incorrect Questions Review</h3>
+        <button class="incorrect-close" onclick="toggleIncorrectQuestions()">&times;</button>
+      </div>
+      <div class="incorrect-list" id="incorrectList"></div>
+    </div>
+
+    <!-- ── Skipped Questions Section ───────────────── -->
+    <div id="skipped-section" class="skipped-section hidden">
+      <div class="skipped-header">
+        <h3>Skipped Questions Review</h3>
+        <button class="skipped-close" onclick="toggleSkippedQuestions()">&times;</button>
+      </div>
+      <div class="skipped-list" id="skippedList"></div>
+    </div>
+
+    <!-- ── Skills Breakdown ───────────────────────── -->
+    <div class="results-section">
+      <h2>Performance by Skill</h2>
+      <div class="skill-list" id="skillList"></div>
+    </div>
+
+    <!-- ── Question Review ────────────────────────── -->
+    <div class="results-section">
+      <h2>Question Review</h2>
+      <div class="question-legend">
+        <div class="legend-item"><div class="legend-dot correct"></div> Correct</div>
+        <div class="legend-item"><div class="legend-dot incorrect"></div> Incorrect</div>
+        <div class="legend-item"><div class="legend-dot skipped"></div> Skipped</div>
+      </div>
+      <div class="question-grid" id="questionGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Question Modal ──────────────────────────── -->
+  <div class="q-modal-overlay hidden" id="qModalOverlay" onclick="closeQuestionModal(event)">
+    <div class="q-modal" id="qModal">
+      <div class="q-modal-header">
+        <div class="q-modal-meta">
+          <span class="q-modal-num" id="qModalNum"></span>
+          <span class="q-modal-topic" id="qModalTopic"></span>
+          <span class="q-modal-module" id="qModalModule"></span>
+        </div>
+        <button class="q-modal-close" onclick="closeQuestionModal()">&times;</button>
+      </div>
+
+      <div class="q-modal-body">
+        <div class="q-modal-passage" id="qModalPassage"></div>
+        <p class="q-modal-question" id="qModalQuestion"></p>
+        <ul class="q-modal-choices" id="qModalChoices"></ul>
+      </div>
+
+      <div class="q-modal-footer">
+        <div class="q-modal-result" id="qModalResult"></div>
+        <div class="q-modal-answer" id="qModalAnswer"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">© 2026 SAT Prep. All rights reserved.</footer>
+
+  <!-- Question Preview Modal -->
+  <div id="question-modal" class="question-modal hidden">
+    <div class="question-modal-content">
+      <div class="question-modal-header">
+        <h2 id="question-modal-title">Question Preview</h2>
+        <button class="question-modal-close" onclick="closeQuestionModal()">&times;</button>
+      </div>
+      <div class="question-modal-body">
+        <div class="question-info">
+          <span class="question-number" id="modal-question-num"></span>
+          <span class="question-topic" id="modal-question-topic"></span>
+          <span class="question-module" id="modal-question-module"></span>
+          <span class="question-time" id="modal-question-time" style="font-size:.82rem;color:#888;margin-left:auto;"></span>
+        </div>
+        <div id="modal-passage"></div>
+        <div class="question-text" id="modal-question-text"></div>
+        <div class="question-answers">
+          <div class="previous-answer">
+            <h4>Your Answer</h4>
+            <div id="modal-user-answer" class="user-answer-display"></div>
+          </div>
+          <div class="reanswer-section">
+            <h4>Try Again</h4>
+            <div id="modal-reanswer-options" class="reanswer-options"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/accessibility.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/data/results-mock.js"></script>
+  <script src="js/results.js"></script>
+</body>
+</html>
