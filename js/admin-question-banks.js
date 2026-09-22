@@ -364,7 +364,8 @@ async function deleteQuestionBank(id, filename, questionCount) {
       var b = await res.json().catch(function() { return {}; });
       throw new Error(b.error || 'Delete failed (' + res.status + ')');
     }
-    await loadQuestionBanks();
+    _allBanks = _allBanks.filter(function(bank) { return String(bank.id) !== String(id); });
+    filterBanks();
     showBankDeletedNotice(filename);
   } catch (err) {
     alert('Could not delete: ' + err.message);
