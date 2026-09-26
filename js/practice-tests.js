@@ -86,17 +86,6 @@ function render() {
     (currentQ + 1) + ' / ' + mod.questions.length;
   document.getElementById('question-text').textContent = q.text;
 
-  // Image/graph — show if question has one
-  var imgEl = document.getElementById('question-image');
-  if (imgEl) {
-    if (q.image_url) {
-      imgEl.src = q.image_url;
-      imgEl.style.display = 'block';
-    } else {
-      imgEl.style.display = 'none';
-    }
-  }
-
   // Passage — show for Reading & Writing modules
   var passageEl   = document.getElementById('question-passage');
   var passageBody = document.getElementById('passage-body');
@@ -113,6 +102,25 @@ function render() {
     passageEl.style.display = 'none';
   }
 
+  // Image/graph — show if question has one. A Reading & Writing table/graph is
+  // part of the passage, so it goes in the passage panel; Math figures go
+  // under the question.
+  var imgEl = document.getElementById('question-image');
+  if (imgEl) {
+    if (q.image_url) {
+      imgEl.src = q.image_url;
+      imgEl.style.display = 'block';
+    } else {
+      imgEl.style.display = 'none';
+    }
+    var textEl = document.getElementById('question-text');
+    if (isRW) {
+      passageEl.appendChild(imgEl);
+    } else {
+      textEl.parentNode.insertBefore(imgEl, textEl.nextSibling);
+    }
+  }
+
   // Flag button
   var flagBtn = document.getElementById('flag-btn');
   flagBtn.textContent = flagged[mi][currentQ] ? '🚩 Flagged' : '🚩 Flag Question';
@@ -126,13 +134,41 @@ function render() {
   var list    = document.getElementById('choices-list');
   var letters = ['A', 'B', 'C', 'D'];
   list.innerHTML = '';
-  q.choices.forEach(function(choice, ci) {
-    var li = document.createElement('li');
-    if (answers[mi][currentQ] === ci) li.classList.add('selected');
-    li.innerHTML = '<span class="choice-letter">' + letters[ci] + '</span> ' + choice;
-    li.addEventListener('click', function() { selectAnswer(ci); });
-    list.appendChild(li);
-  });
+  if (isGridIn(q)) {
+    // Student-produced response: typed answer instead of A–D
+    var row   = document.createElement('li');
+    var label = document.createElement('label');
+    var input = document.createElement('input');
+    row.className     = 'grid-in-row';
+    label.className   = 'grid-in-label';
+    label.htmlFor     = 'grid-in-input';
+    label.textContent = 'Enter your answer';
+    input.id           = 'grid-in-input';
+    input.className    = 'grid-in-input';
+    input.type         = 'text';
+    input.autocomplete = 'off';
+    input.value        = answers[mi][currentQ] || '';
+    input.addEventListener('input', function() {
+      var v = input.value.trim();
+      answers[mi][currentQ] = v === '' ? null : v;
+      renderGrid();
+    });
+    row.appendChild(label);
+    row.appendChild(input);
+    list.appendChild(row);
+  } else {
+    q.choices.forEach(function(choice, ci) {
+      var li     = document.createElement('li');
+      var letter = document.createElement('span');
+      if (answers[mi][currentQ] === ci) li.classList.add('selected');
+      letter.className   = 'choice-letter';
+      letter.textContent = letters[ci];
+      li.appendChild(letter);
+      li.appendChild(document.createTextNode(' ' + choice));
+      li.addEventListener('click', function() { selectAnswer(ci); });
+      list.appendChild(li);
+    });
+  }
 
   // Prev button
   document.getElementById('btn-prev').disabled = (currentQ === 0);
@@ -147,9 +183,10 @@ function render() {
   // Render LaTeX math in question text and choices
   if (typeof renderMathInElement === 'function') {
     renderMathInElement(document.getElementById('test-layout'), {
+      // No single-$ delimiter: question text uses $ for money ("$3,200 plus $380")
       delimiters: [
         { left: '$$', right: '$$', display: true  },
-        { left: '$',  right: '$',  display: false }
+        { left: '\\(', right: '\\)', display: false }
       ],
       throwOnError: false
     });
@@ -174,6 +211,17 @@ function renderGrid() {
 }
 
 // ── Actions ─────────────────────────────────────────────────
+// A question with no answer choices is a student-produced response (grid-in).
+function isGridIn(q) {
+  return q.choices.every(function(c) { return !c; });
+}
+
+// Stored answer → what gets submitted: a letter for A–D, the typed text for grid-in.
+function answerValue(ans) {
+  if (ans === null) return null;
+  return typeof ans === 'string' ? ans : ['A','B','C','D'][ans];
+}
+
 function selectAnswer(ci) {
   answers[currentModule][currentQ] = ci;
   render();
@@ -202,7 +250,7 @@ function nextModule() {
     answers:    mod.questions.map(function(q, i) {
       return {
         question_id:     q.id,
-        selected_answer: answers[currentModule][i] !== null ? ['A','B','C','D'][answers[currentModule][i]] : null,
+        selected_answer: answerValue(answers[currentModule][i]),
         flagged:         flagged[currentModule][i]
       };
     })
@@ -221,7 +269,7 @@ function nextModule() {
     var modLabel = mod.title;
     allResults.modules.push(modLabel);
     mod.questions.forEach(function(q, qi) {
-      var selected = answers[mi][qi] !== null ? ['A','B','C','D'][answers[mi][qi]] : null;
+      var selected = answerValue(answers[mi][qi]);
       var correct  = q.answer !== null ? ['A','B','C','D'][q.answer] : null;
       var entry = {
         question_id:     q.id || (mi * 100 + qi + 1),
