@@ -129,7 +129,8 @@ async function loadResults() {
       options:       [q.choice_a, q.choice_b, q.choice_c, q.choice_d],
       correctAnswer: q.correct_answer,
       userAnswer:    q.selected_answer || null,
-      time_taken:    q.time_taken || null
+      time_taken:    q.time_taken || null,
+      explanation:   q.explanation || null
     };
   }
 
@@ -167,7 +168,10 @@ async function loadResults() {
   return all;
 }
 
-// Mock/fallback data (skills, modules, questionData) loaded from js/data/results-mock.js
+// Mock/fallback data (skills, modules, questionData) loaded from js/data/results-mock.js.
+// That file may be absent, so read its globals defensively rather than crashing the page.
+function mockSkills()    { return typeof skills       !== 'undefined' ? skills       : []; }
+function mockQuestions() { return typeof questionData !== 'undefined' ? questionData : []; }
 
 // ── Render Skills ──────────────────────────────────
 
@@ -180,7 +184,7 @@ function colorClass(pct) {
 const skillList = document.getElementById("skillList");
 let currentSection = "";
 
-skills.forEach(skill => {
+mockSkills().forEach(skill => {
   if (skill.section !== currentSection) {
     currentSection = skill.section;
     const label = document.createElement("div");
@@ -241,7 +245,7 @@ function toggleIncorrectQuestions() {
 
 function populateIncorrectQuestions() {
   const incorrectList = document.getElementById('incorrectList');
-  const source = liveData || questionData;
+  const source = liveData || mockQuestions();
   const incorrectQuestions = source.filter(q => q.status === 'incorrect');
 
   incorrectQuestions.forEach(q => {
@@ -284,7 +288,7 @@ function toggleCorrectQuestions() {
 
 function populateCorrectQuestions() {
   const correctList = document.getElementById('correctList');
-  const source = liveData || questionData;
+  const source = liveData || mockQuestions();
   const correctQuestions = source.filter(q => q.status === 'correct');
 
   correctQuestions.forEach(q => {
@@ -327,7 +331,7 @@ function toggleSkippedQuestions() {
 
 function populateSkippedQuestions() {
   const skippedList = document.getElementById('skippedList');
-  const source = liveData || questionData;
+  const source = liveData || mockQuestions();
   const skippedQuestions = source.filter(q => q.status === 'skipped');
 
   skippedQuestions.forEach(q => {
@@ -395,7 +399,7 @@ window.addEventListener("load", async () => {
     liveData = data;
   } catch(e) {
     // Fall back to mock data
-    data = questionData;
+    data = mockQuestions();
   }
 
   renderGrid(data);
@@ -432,6 +436,10 @@ function openQuestionModal(question) {
   }
 
   document.getElementById('modal-question-text').textContent = question.question;
+
+  // Explanation — shown as soon as the pop-up opens
+  document.getElementById('modal-explanation-text').textContent =
+    question.explanation || 'Explanation coming soon.';
 
   // Show user's previous answer
   const userAnswerDiv = document.getElementById('modal-user-answer');

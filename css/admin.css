@@ -1115,6 +1115,46 @@ body.dark-mode .upload-error {
   color: #f57a7a;
 }
 
+/* ── Manage Tests: student access ─────────────────── */
+.test-access-panel {
+  border: 1px solid #e3e7ef;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+.test-access-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.test-access-count { margin-left: 8px; font-size: 0.85rem; color: #777; }
+.test-access-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.test-access-hint { font-size: 0.82rem; color: #888; margin: 6px 0 10px; }
+.test-access-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px 16px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.test-access-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 0;
+}
+.test-access-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.test-access-item small { color: #999; }
+.test-access-status { font-size: 0.82rem; margin-top: 8px; color: #777; min-height: 1em; }
+.test-access-status.error { color: #b91c1c; }
+.test-access-status.ok { color: #166534; }
+body.dark-mode .test-access-panel { background: #1c1f2a; border-color: #2e3344; }
+
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 960px) {
   .admin-stats-bar { grid-template-columns: repeat(2, 1fr); }

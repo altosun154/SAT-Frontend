@@ -325,6 +325,24 @@
         <button type="button" class="row-action-btn row-action-danger" id="deleteTestBtn" onclick="deleteCurrentTest()" disabled>Delete Test</button>
       </div>
 
+      <!-- Student access: which students see this test in their Practice Test Library -->
+      <div class="test-access-panel hidden" id="testAccessPanel">
+        <div class="test-access-head">
+          <div>
+            <span class="panel-title">Student access</span>
+            <span class="test-access-count" id="testAccessCount"></span>
+          </div>
+          <div class="test-access-actions">
+            <button type="button" class="row-action-btn" onclick="setAllTestAccess(true)">Select all</button>
+            <button type="button" class="row-action-btn" onclick="setAllTestAccess(false)">Clear</button>
+            <button type="button" class="btn btn-primary" id="saveTestAccessBtn" onclick="saveTestAccess()">Save access</button>
+          </div>
+        </div>
+        <p class="test-access-hint">Checked students will see this test in their Practice Test Library. Locked tests are hidden.</p>
+        <div class="test-access-list" id="testAccessList"></div>
+        <p class="test-access-status" id="testAccessStatus"></p>
+      </div>
+
       <div class="table-wrap">
         <table class="admin-table" id="manageQuestionsTable">
           <thead>

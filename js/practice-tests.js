@@ -6,9 +6,10 @@
 
 // ── API endpoint ─────────────────────────────────────────────
 // test_id comes from the URL (e.g. practice-tests.html?test_id=7, as linked from
-// assigned-tests.js); falls back to 1 (the default seeded test) when absent so
-// existing links straight into practice-tests.html keep working.
-const TEST_ID = parseInt(new URLSearchParams(window.location.search).get('test_id'), 10) || 1;
+// the Practice Test Library and assigned-tests.js). Without one there's no test
+// to take, so send the student to the library to pick an unlocked test.
+const TEST_ID = parseInt(new URLSearchParams(window.location.search).get('test_id'), 10) || null;
+if (!TEST_ID) window.location.replace('test-library.html');
 const API_URL = 'https://digital-sat-testing-analytics-platform.onrender.com/tests/' + TEST_ID + '/questions';
 
 // ── State ───────────────────────────────────────────────────
@@ -377,6 +378,7 @@ function transformQuestions(questions) {
 
 // ── Boot ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
+  if (!TEST_ID) return; // redirecting to the library
 
   // Nav buttons
   document.getElementById('btn-prev').addEventListener('click', function() {
@@ -401,8 +403,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('calc-close').addEventListener('click', function() { hideCalc(); });
 
   // Fetch questions
-  fetch(API_URL)
+  fetch(API_URL, { headers: { 'Authorization': 'Bearer ' + getToken() } })
     .then(function(res) {
+      if (res.status === 403) throw new Error('locked');
       if (!res.ok) throw new Error('API returned ' + res.status);
       return res.json();
     })
@@ -410,8 +413,14 @@ document.addEventListener('DOMContentLoaded', function() {
       initState(transformQuestions(data));
       startTest();
     })
-    .catch(function() {
-      document.getElementById('section-title').textContent = 'Could not load test. Please check your connection and refresh.';
+    .catch(function(err) {
+      var titleEl = document.getElementById('section-title');
+      if (err.message === 'locked') {
+        titleEl.innerHTML = 'This test is locked. Ask your instructor to unlock or assign it to you. ' +
+          '<a href="test-library.html" style="color:inherit;text-decoration:underline">Back to the Practice Test Library</a>';
+      } else {
+        titleEl.textContent = 'Could not load test. Please check your connection and refresh.';
+      }
     });
 });
 

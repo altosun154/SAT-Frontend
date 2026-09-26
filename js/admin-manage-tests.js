@@ -42,9 +42,122 @@ function onManageTestChange() {
   if (!testId) {
     currentManageQuestions = [];
     renderManageQuestionsTable();
+    hideTestAccessPanel();
     return;
   }
   loadManageQuestions(testId);
+  loadTestAccess(testId);
+}
+
+// ── Student access (per-student unlock) ─────────────────────────
+// Backend: GET /admin/tests/:id/unlocks → { test_id, students: [{ id, name, email }] }
+//          PUT /admin/tests/:id/unlocks   { user_ids: [...] } → same shape;
+//          400 { user_ids: [...] } lists accounts that aren't active students.
+let testAccessUserIds = new Set();
+
+function unlockedIdsFrom(body) {
+  return new Set((body && body.students || []).map(s => String(s.id)));
+}
+
+function hideTestAccessPanel() {
+  document.getElementById('testAccessPanel').classList.add('hidden');
+}
+
+function setTestAccessStatus(msg, kind) {
+  const el = document.getElementById('testAccessStatus');
+  el.textContent = msg || '';
+  el.className = 'test-access-status' + (kind ? ' ' + kind : '');
+}
+
+async function loadTestAccess(testId) {
+  document.getElementById('testAccessPanel').classList.remove('hidden');
+  document.getElementById('testAccessList').innerHTML = '';
+  document.getElementById('testAccessCount').textContent = '';
+  setTestAccessStatus('Loading…');
+  try {
+    const body = await apiFetch(`/admin/tests/${testId}/unlocks`);
+    if (String(currentManageTestId) !== String(testId)) return; // selection changed meanwhile
+    testAccessUserIds = unlockedIdsFrom(body);
+    setTestAccessStatus('');
+  } catch {
+    if (String(currentManageTestId) !== String(testId)) return;
+    testAccessUserIds = new Set();
+    setTestAccessStatus('Could not load student access for this test.', 'error');
+  }
+  renderTestAccessList();
+}
+
+function renderTestAccessList() {
+  const list = document.getElementById('testAccessList');
+  if (!allUsers.length) {
+    list.innerHTML = '<p class="test-access-hint">No students found.</p>';
+    updateTestAccessCount();
+    return;
+  }
+  const students = [...allUsers].sort((a, b) =>
+    (a.name || a.fullName || '').localeCompare(b.name || b.fullName || ''));
+  list.innerHTML = students.map(u => {
+    const id = String(u.id);
+    return `<label class="test-access-item">
+      <input type="checkbox" value="${escHtml(id)}" ${testAccessUserIds.has(id) ? 'checked' : ''} onchange="onTestAccessToggle(this)" />
+      <span>${escHtml(u.name || u.fullName || '—')} <small>${escHtml(u.email || '')}</small></span>
+    </label>`;
+  }).join('');
+  updateTestAccessCount();
+}
+
+function onTestAccessToggle(input) {
+  if (input.checked) testAccessUserIds.add(input.value);
+  else testAccessUserIds.delete(input.value);
+  updateTestAccessCount();
+  setTestAccessStatus('Unsaved changes.');
+}
+
+function setAllTestAccess(checked) {
+  document.querySelectorAll('#testAccessList input[type="checkbox"]').forEach(cb => {
+    cb.checked = checked;
+    if (checked) testAccessUserIds.add(cb.value);
+    else testAccessUserIds.delete(cb.value);
+  });
+  updateTestAccessCount();
+  setTestAccessStatus('Unsaved changes.');
+}
+
+function updateTestAccessCount() {
+  document.getElementById('testAccessCount').textContent =
+    `${testAccessUserIds.size} of ${allUsers.length} students unlocked`;
+}
+
+async function saveTestAccess() {
+  if (!currentManageTestId) return;
+  const btn = document.getElementById('saveTestAccessBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    // Plain fetch rather than apiFetch so a 400 body (which accounts were refused) can be shown.
+    const res = await fetch(`${API_BASE}/admin/tests/${currentManageTestId}/unlocks`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ user_ids: [...testAccessUserIds].map(Number) }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const refused = (body.user_ids || [])
+        .map(id => (allUsers.find(u => String(u.id) === String(id)) || {}).name || `#${id}`);
+      setTestAccessStatus(refused.length
+        ? `Not saved — these accounts aren't active students: ${refused.join(', ')}. Uncheck them and save again.`
+        : (body.error || `Failed to save access (${res.status}). Please try again.`), 'error');
+      return;
+    }
+    testAccessUserIds = unlockedIdsFrom(body);
+    renderTestAccessList();
+    setTestAccessStatus('Access saved.', 'ok');
+  } catch {
+    setTestAccessStatus('Failed to save access. Please check your connection and try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save access';
+  }
 }
 
 async function loadManageQuestions(testId) {
@@ -239,6 +352,7 @@ async function deleteCurrentTest() {
     currentManageQuestions = [];
     sel.value = '';
     renderManageQuestionsTable();
+    hideTestAccessPanel();
     await loadTests();
     populateManageTestDropdown();
     populateAssignDropdowns();
