@@ -187,12 +187,12 @@ function renderDraftTable() {
     const addBtn = g.subject
       ? `<button type="button" class="row-action-btn" onclick="addDraftQuestion('${escHtml(g.subject)}')">+ Add question</button>`
       : '';
-    const header = `<tr class="draft-group-row"><td colspan="9">
+    const header = `<tr class="draft-group-row"><td colspan="7">
         <span>${escHtml(g.label)}</span><span class="draft-group-count">${rows.length} question${rows.length === 1 ? '' : 's'}</span>${addBtn}
       </td></tr>`;
     const body = rows.length
       ? rows.map(({ q, i }, n) => draftRowHtml(q, i, n + 1, problemIndexes.has(i))).join('')
-      : '<tr><td colspan="9" class="draft-group-empty">No questions in this module.</td></tr>';
+      : '<tr><td colspan="7" class="draft-group-empty">No questions in this module.</td></tr>';
     return header + body;
   }).join('');
 }
@@ -211,17 +211,13 @@ function draftRowHtml(q, index, num, hasProblem) {
   const image = q.image_url
     ? `<a href="${escHtml(q.image_url)}" target="_blank" rel="noopener"><img class="draft-thumb" src="${escHtml(q.image_url)}" alt="Question ${num} figure" loading="lazy"></a>`
     : '<span class="score-na">—</span>';
-  const explanation = (q.explanation || '').trim()
-    ? '<span class="badge badge-active">Yes</span>'
-    : '<span class="badge badge-inactive">None</span>';
   return `<tr class="${hasProblem ? 'draft-row-problem' : ''}">
     <td>${num}</td>
     <td class="draft-q-cell">${preview}</td>
     <td>${diffBadge}</td>
     <td>${typeBadge}</td>
-    <td>${escHtml(q.correct_answer || '—')}</td>
+    <td class="q-answer-cell">${answerWithExplanationHtml(q)}</td>
     <td>${image}</td>
-    <td>${explanation}</td>
     <td class="draft-row-actions">
       <button type="button" class="row-action-btn" onclick="editDraftQuestion(${index})">Edit</button>
       <button type="button" class="row-action-btn row-action-danger" onclick="removeDraftQuestion(${index})">Remove</button>

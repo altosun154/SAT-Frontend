@@ -1337,3 +1337,39 @@ body.dark-mode .draft-problems .link-btn { color: #fca5a5; }
 }
 .draft-q-form textarea:focus { outline: none; border-color: #152a8c; }
 body.dark-mode .draft-q-form textarea { background: #333; color: #e8edf3; border-color: #555; }
+
+/* Admin question tables: correct answer with its explanation underneath */
+.q-answer-cell { min-width: 220px; max-width: 360px; }
+.q-answer { font-weight: 700; }
+.q-explanation {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #666;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.q-explanation-none { color: #bbb; font-style: italic; }
+body.dark-mode .q-explanation { color: #aaa; }
+body.dark-mode .q-explanation-none { color: #777; }
+
+/* Manage Tests edit modal: textareas get the same look as its inputs */
+#editQuestionForm textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+  box-sizing: border-box;
+}
+#editQuestionForm textarea:focus { outline: none; border-color: #152a8c; }
+body.dark-mode #editQuestionForm textarea { background: #333; color: #e8edf3; border-color: #555; }
+/* The modal's MCQ/grid-in toggle hides fields with a "hidden" class, which the admin
+   stylesheets never defined — so both answer inputs were always showing. */
+#editQuestionForm .hidden { display: none; }

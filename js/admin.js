@@ -102,10 +102,12 @@ function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
 
+// Escapes quotes too, so the result is safe inside attribute values
+// (title="…", href="…"), not just element text.
 function escHtml(str) {
   const d = document.createElement('div');
   d.textContent = String(str);
-  return d.innerHTML;
+  return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function showToast() {}

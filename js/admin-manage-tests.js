@@ -19,6 +19,15 @@ function isGridIn(q) {
   return !(q.choice_a || q.choice_b || q.choice_c || q.choice_d);
 }
 
+// Admin tables: the correct answer with its explanation directly underneath.
+// Shared with the test-draft editor (admin-test-drafts.js).
+function answerWithExplanationHtml(q) {
+  const explanation = (q.explanation || '').trim();
+  return `<div class="q-answer">${escHtml(q.correct_answer || '—')}</div>` + (explanation
+    ? `<div class="q-explanation" title="${escHtml(explanation)}">${escHtml(explanation)}</div>`
+    : '<div class="q-explanation q-explanation-none">No explanation</div>');
+}
+
 // ── Test dropdown ────────────────────────────────────────────────
 function populateManageTestDropdown() {
   const sel = document.getElementById('manageTestSelect');
@@ -213,7 +222,7 @@ function renderManageQuestionsTable() {
       <td>${subjectLabel}</td>
       <td>${diffBadge}</td>
       <td>${typeBadge}</td>
-      <td>${escHtml(q.correct_answer || '—')}</td>
+      <td class="q-answer-cell">${answerWithExplanationHtml(q)}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="row-action-btn" onclick="editQuestion(${q.id})">Edit</button>
         <button class="row-action-btn row-action-danger" onclick="deleteQuestion(${q.id})">Delete</button>
@@ -239,6 +248,7 @@ function editQuestion(questionId) {
   document.getElementById('editQDifficulty').value = (q.difficulty || 'medium').toLowerCase();
   document.getElementById('editQSkill').value = q.skill || '';
   document.getElementById('editQImageUrl').value = q.image_url || '';
+  document.getElementById('editQExplanation').value = q.explanation || '';
 
   const gridIn = isGridIn(q);
   setEditQuestionType(gridIn ? 'gridin' : 'mcq');
@@ -287,6 +297,7 @@ async function submitEditQuestion(e) {
     difficulty: document.getElementById('editQDifficulty').value,
     skill:      document.getElementById('editQSkill').value.trim() || null,
     image_url:  document.getElementById('editQImageUrl').value.trim() || null,
+    explanation: document.getElementById('editQExplanation').value.trim() || null,
   };
 
   if (isGridInType) {
