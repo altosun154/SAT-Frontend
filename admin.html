@@ -281,7 +281,7 @@
       <div class="assign-layout">
         <div class="assign-form-card card" style="max-width:480px">
           <h2 class="assign-form-title">Upload Test</h2>
-          <p style="font-size:0.88rem;color:#777;margin:-8px 0 20px">Select a .pdf or .docx file following the practice-test template (section headers, numbered questions with a difficulty tag, A–D choices or a grid-in marker, and a trailing answer key).</p>
+          <p style="font-size:0.88rem;color:#777;margin:-8px 0 20px">Select a .pdf or .docx file following the practice-test template (section headers, numbered questions with a difficulty tag, A–D choices or a grid-in marker, and a trailing answer key). The upload becomes a draft you can review and edit — students only see the test once you publish it.</p>
 
           <form id="uploadTestForm" onsubmit="uploadTest(event)">
 
@@ -300,12 +300,56 @@
 
             <div style="display:flex;gap:10px;margin-top:20px">
               <button type="button" class="assign-submit-btn" style="background:#fff;color:#152a8c;border:1px solid #d0d7e0;flex:0 0 auto;padding:11px 20px" onclick="resetUploadForm()">Clear</button>
-              <button type="submit" class="assign-submit-btn" id="uploadTestBtn">Upload Test</button>
+              <button type="submit" class="assign-submit-btn" id="uploadTestBtn">Upload &amp; Review</button>
             </div>
 
           </form>
         </div>
+
+        <div class="card drafts-card">
+          <h2 class="assign-form-title">Drafts</h2>
+          <p class="drafts-hint">Uploaded tests that haven’t been published yet.</p>
+          <div id="draftsList"><p class="drafts-empty">Loading…</p></div>
+        </div>
       </div>
+
+      <!-- Draft editor: review and fix an uploaded test, then publish (admin-test-drafts.js) -->
+      <section id="draftEditor" class="draft-editor" hidden>
+        <div class="draft-editor-head">
+          <div class="draft-name-wrap">
+            <label for="draftTestName" class="draft-name-label">Test name</label>
+            <input type="text" id="draftTestName" class="assign-input draft-name-input" maxlength="200" onchange="onDraftNameChange()" />
+            <div class="draft-file-meta">From <span id="draftFileName"></span> · <span id="draftSaveStatus" class="draft-save-status" role="status"></span>
+              <button type="button" class="link-btn" id="draftRetrySaveBtn" onclick="saveDraft()" hidden>Retry</button></div>
+          </div>
+          <div class="draft-editor-actions">
+            <button type="button" class="btn btn-outline" onclick="closeDraftEditor()">Close</button>
+            <button type="button" class="row-action-btn row-action-danger" onclick="discardDraft()">Discard Draft</button>
+            <button type="button" class="btn btn-primary" id="draftPublishBtn" onclick="publishDraft()">Publish Test</button>
+          </div>
+        </div>
+
+        <div id="draftProblems" class="draft-problems" role="alert" hidden></div>
+        <div id="draftModuleSummary" class="draft-module-summary"></div>
+
+        <div class="table-wrap draft-table-wrap">
+          <table class="admin-table draft-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>Difficulty</th>
+                <th>Type</th>
+                <th>Answer</th>
+                <th>Image</th>
+                <th>Explanation</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="draftTableBody"></tbody>
+          </table>
+        </div>
+      </section>
     </div><!-- /tab-upload -->
 
     <!-- ══════════════════════════════════════════════ -->
@@ -441,6 +485,103 @@
   <!-- ══════════════════════════════════════════════ -->
   <!--  Edit Question Modal                          -->
   <!-- ══════════════════════════════════════════════ -->
+  <!-- Edit a question inside a test draft (admin-test-drafts.js) -->
+  <div id="draftQuestionModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="draftQuestionModalTitle">
+    <div class="modal-content modal-wide">
+      <div class="modal-header">
+        <h2 id="draftQuestionModalTitle">Edit Question</h2>
+        <button class="modal-close" onclick="closeDraftQuestionModal()" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="draftQuestionForm" class="draft-q-form" onsubmit="submitDraftQuestion(event)" style="padding:24px">
+        <div id="draftQProblems" class="draft-problems" hidden></div>
+
+        <div class="form-group">
+          <label>Question Type</label>
+          <div class="assign-target-toggle">
+            <button type="button" class="assign-toggle-btn assign-toggle-active" data-qtype="mcq" onclick="setDraftQuestionType('mcq')">Multiple Choice</button>
+            <button type="button" class="assign-toggle-btn" data-qtype="gridin" onclick="setDraftQuestionType('gridin')">Grid-In (Student-Produced)</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="draftQSubject">Module</label>
+          <select id="draftQSubject" required>
+            <option value="" disabled>— Pick a module —</option>
+            <option value="Section 1, Module 1: Reading and Writing">Reading &amp; Writing — Module 1</option>
+            <option value="Section 1, Module 2: Reading and Writing">Reading &amp; Writing — Module 2</option>
+            <option value="Section 2, Module 1: Math">Math — Module 1</option>
+            <option value="Section 2, Module 2: Math">Math — Module 2</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="draftQPassage">Passage <span class="optional">(optional — shown in its own panel for Reading &amp; Writing)</span></label>
+          <textarea id="draftQPassage" rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="draftQText">Question Text</label>
+          <textarea id="draftQText" rows="3" required></textarea>
+        </div>
+
+        <div id="draftQChoicesGroup">
+          <div class="form-group"><label for="draftQChoiceA">Choice A</label><input type="text" id="draftQChoiceA" /></div>
+          <div class="form-group"><label for="draftQChoiceB">Choice B</label><input type="text" id="draftQChoiceB" /></div>
+          <div class="form-group"><label for="draftQChoiceC">Choice C</label><input type="text" id="draftQChoiceC" /></div>
+          <div class="form-group"><label for="draftQChoiceD">Choice D</label><input type="text" id="draftQChoiceD" /></div>
+        </div>
+
+        <div class="form-group" id="draftQAnswerMcqGroup">
+          <label for="draftQAnswerSelect">Correct Answer</label>
+          <select id="draftQAnswerSelect">
+            <option value="">— Not set —</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="draftQAnswerTextGroup" hidden>
+          <label for="draftQAnswerText">Correct Answer</label>
+          <input type="text" id="draftQAnswerText" maxlength="10" placeholder="e.g. 12 or 3.5" />
+        </div>
+
+        <div class="form-group">
+          <label for="draftQExplanation">Explanation <span class="optional">(shown to students on the results page)</span></label>
+          <textarea id="draftQExplanation" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="draftQDifficulty">Difficulty</label>
+          <select id="draftQDifficulty">
+            <option value="">— Not set —</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="draftQSkill">Skill / Topic <span class="optional">(optional)</span></label>
+          <input type="text" id="draftQSkill" placeholder="e.g. Algebra, Words in Context" />
+        </div>
+
+        <div class="form-group">
+          <label for="draftQImageUrl">Image URL <span class="optional">(optional)</span></label>
+          <input type="text" id="draftQImageUrl" placeholder="https://…" oninput="updateDraftImagePreview()" />
+          <img id="draftQImagePreview" class="draft-q-image-preview" alt="Question image preview" hidden />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeDraftQuestionModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Question</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="editQuestionModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editQuestionModalTitle">
     <div class="modal-content modal-wide">
       <div class="modal-header">
@@ -566,6 +707,7 @@
   <script src="js/admin-users.js"></script>
   <script src="js/admin-assignments.js"></script>
   <script src="js/admin-upload.js"></script>
+  <script src="js/admin-test-drafts.js"></script>
   <script src="js/admin-manage-tests.js"></script>
   <script src="js/admin-import.js"></script>
   <script src="js/admin-question-banks.js"></script>

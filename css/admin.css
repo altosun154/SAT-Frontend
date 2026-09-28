@@ -1168,3 +1168,172 @@ body.dark-mode .test-access-panel { background: #1c1f2a; border-color: #2e3344; 
   .search-wrap { max-width: 100%; }
   .progress-score-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Test drafts: review before publishing (admin-test-drafts.js) ── */
+.draft-editor[hidden],
+.draft-editor [hidden],
+.draft-q-form [hidden],
+#draftsList [hidden] { display: none !important; }
+
+.upload-info {
+  background: #eef4ff;
+  border: 1px solid #c7d7f5;
+  color: #1e3a8a;
+}
+
+.drafts-card { padding: 28px; }
+.drafts-hint { font-size: 0.88rem; color: #777; margin: -8px 0 16px; }
+.drafts-empty { font-size: 0.9rem; color: #999; margin: 0; }
+
+.draft-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #eef1f5;
+  flex-wrap: wrap;
+}
+.draft-list-row:first-child { border-top: none; }
+.draft-list-row-open .draft-list-name::after {
+  content: 'Open';
+  margin-left: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #1a7a48;
+  background: #e3f7ee;
+  padding: 2px 8px;
+  border-radius: 10px;
+  vertical-align: middle;
+}
+.draft-list-info { min-width: 0; flex: 1; }
+.draft-list-name { font-weight: 600; color: #152a8c; overflow-wrap: anywhere; }
+.draft-list-meta { font-size: 0.8rem; color: #888; margin-top: 2px; overflow-wrap: anywhere; }
+.draft-list-actions { display: flex; gap: 6px; }
+
+.draft-editor { margin-top: 24px; }
+
+.draft-editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.draft-name-wrap { flex: 1; min-width: 260px; max-width: 560px; }
+.draft-name-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+.draft-name-input { width: 100%; font-size: 1.05rem; font-weight: 600; }
+.draft-file-meta { font-size: 0.82rem; color: #888; margin-top: 6px; overflow-wrap: anywhere; }
+.draft-save-status { font-weight: 600; }
+.draft-save-saved  { color: #1a7a48; }
+.draft-save-saving { color: #888; }
+.draft-save-error  { color: #b91c1c; }
+.draft-editor-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.draft-problems {
+  background: #fdecea;
+  border: 1px solid #f5b3ae;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+.draft-problems-title { font-weight: 700; }
+.draft-problems ul { margin: 8px 0 0; padding-left: 18px; max-height: 220px; overflow-y: auto; }
+.draft-problems li { margin: 3px 0; }
+.draft-problems .link-btn { color: #b91c1c; font-weight: 600; }
+
+.draft-module-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.draft-module-chip {
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.draft-module-chip-label { font-size: 0.78rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.4px; }
+.draft-module-chip-count { font-size: 1.15rem; font-weight: 700; color: #152a8c; margin-top: 4px; }
+.draft-module-chip-sub { font-size: 0.8rem; color: #888; }
+
+.draft-table-wrap { overflow-x: auto; }
+.draft-table td { vertical-align: middle; }
+.draft-q-cell { max-width: 420px; min-width: 220px; }
+.draft-row-actions { white-space: nowrap; }
+.draft-row-actions .row-action-btn + .row-action-btn { margin-left: 6px; }
+.draft-row-problem td { background: #fff5f4; }
+.draft-row-problem td:first-child { box-shadow: inset 3px 0 0 #d9534f; }
+.draft-thumb {
+  display: block;
+  width: 56px;
+  height: 40px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 4px;
+}
+.draft-group-row td {
+  background: #f4f7fb;
+  font-weight: 700;
+  color: #152a8c;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.draft-group-row td > * { vertical-align: middle; }
+.draft-group-count { font-weight: 500; color: #888; font-size: 0.82rem; margin: 0 12px 0 8px; }
+.draft-group-empty { color: #999; font-style: italic; }
+
+.draft-q-image-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  margin-top: 10px;
+  border: 1px solid #e8edf3;
+  border-radius: 6px;
+  background: #fff;
+}
+
+body.dark-mode .upload-info { background: #172554; border-color: #1e3a8a; color: #bfdbfe; }
+body.dark-mode .draft-list-row { border-top-color: #333; }
+body.dark-mode .draft-list-name,
+body.dark-mode .draft-module-chip-count,
+body.dark-mode .draft-group-row td { color: #9db7f5; }
+body.dark-mode .draft-name-label,
+body.dark-mode .draft-module-chip-label { color: #aaa; }
+body.dark-mode .draft-module-chip { background: #2a2a2a; border-color: #444; }
+body.dark-mode .draft-group-row td { background: #222; }
+body.dark-mode .draft-row-problem td { background: #3a1616; }
+body.dark-mode .draft-problems { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+body.dark-mode .draft-problems .link-btn { color: #fca5a5; }
+
+@media (max-width: 900px) {
+  .draft-module-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Shared form styles cover inputs and selects but not textareas; match them here. */
+.draft-q-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.draft-q-form textarea:focus { outline: none; border-color: #152a8c; }
+body.dark-mode .draft-q-form textarea { background: #333; color: #e8edf3; border-color: #555; }
