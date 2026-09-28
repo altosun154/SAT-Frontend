@@ -22,7 +22,8 @@ async function uploadTest(e) {
   const result = document.getElementById('uploadResult');
 
   if (!file) {
-    showToast('Please select a .pdf or .docx file.', true);
+    result.textContent = 'Please select a .pdf or .docx file.';
+    result.className = 'upload-result upload-error';
     return;
   }
 
