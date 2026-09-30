@@ -72,6 +72,10 @@ async function loadResults() {
   if (summary) {
     if (summary.rw_score   != null) { set('rw-score-num',   summary.rw_score);   setBar('rw-score-bar',   ((summary.rw_score   - 200) / 600) * 100); }
     if (summary.math_score != null) { set('math-score-num', summary.math_score); setBar('math-score-bar', ((summary.math_score - 200) / 600) * 100); }
+    const rwBandEl = document.getElementById('rw-band');
+    if (rwBandEl && summary.rw_band) { rwBandEl.textContent = summary.rw_band; rwBandEl.style.display = ''; }
+    const mathBandEl = document.getElementById('math-band');
+    if (mathBandEl && summary.math_band) { mathBandEl.textContent = summary.math_band; mathBandEl.style.display = ''; }
   }
 
   // ── Hero section ──────────────────────────────────

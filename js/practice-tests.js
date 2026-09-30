@@ -6,11 +6,30 @@
 
 // ── API endpoint ─────────────────────────────────────────────
 // test_id comes from the URL (e.g. practice-tests.html?test_id=7, as linked from
-// the Practice Test Library and assigned-tests.js). Without one there's no test
-// to take, so send the student to the library to pick an unlocked test.
-const TEST_ID = parseInt(new URLSearchParams(window.location.search).get('test_id'), 10) || null;
-if (!TEST_ID) window.location.replace('test-library.html');
-const API_URL = 'https://digital-sat-testing-analytics-platform.onrender.com/tests/' + TEST_ID + '/questions';
+// assigned-tests.js); falls back to 1 (the default seeded test) when absent so
+// existing links straight into practice-tests.html keep working.
+const TEST_ID = parseInt(new URLSearchParams(window.location.search).get('test_id'), 10) || 1;
+const PT_API_BASE = 'https://digital-sat-testing-analytics-platform.onrender.com';  // (API_BASE is already declared in auth.js)
+// variant=none -> Module 1s (and Module 2s of non-adaptive tests). An adaptive test's
+// Module 2 is requested from POST /tests/<id>/module2 once the student finishes Module 1.
+const API_URL = PT_API_BASE + '/tests/' + TEST_ID + '/questions?variant=none';
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+// The value to send for one answer: a letter for multiple choice, the typed text for
+// free-response math, or null when unanswered.
+function answerValue(mi, qi) {
+  var v = answers[mi][qi];
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return LETTERS[v];
+  v = String(v).trim();
+  return v === '' ? null : v;
+}
+
+// Only run KaTeX on text that actually contains LaTeX, so prices like "$2 ... $5" aren't mangled.
+function markMath(el, text) {
+  var hasLatex = /\\[a-zA-Z]|\$\$|\$[^$]*[\\^_{}][^$]*\$/.test(text || '');
+  el.classList.toggle('no-math', !hasLatex);
+}
 
 // ── State ───────────────────────────────────────────────────
 var MODULES           = [];
@@ -85,7 +104,9 @@ function render() {
     ' &nbsp;·&nbsp; ' + mod.title;
   document.getElementById('question-counter').textContent =
     (currentQ + 1) + ' / ' + mod.questions.length;
-  document.getElementById('question-text').textContent = q.text;
+  var qTextEl = document.getElementById('question-text');
+  qTextEl.textContent = q.text;
+  markMath(qTextEl, q.text);
 
   // Passage — show for Reading & Writing modules
   var passageEl   = document.getElementById('question-passage');
@@ -96,6 +117,7 @@ function render() {
     if (q.passage) {
       passageBody.textContent = q.passage;
       passageBody.className   = 'passage-body';
+      markMath(passageBody, q.passage);
     } else {
       passageBody.innerHTML = '<span class="passage-empty">No passage for this question.</span>';
     }
@@ -131,41 +153,40 @@ function render() {
   // Calculator button visibility
   updateCalcButtonVisibility();
 
-  // Choices
+  // Choices (or a text box for free-response math questions)
   var list    = document.getElementById('choices-list');
-  var letters = ['A', 'B', 'C', 'D'];
+  var letters = LETTERS;
   list.innerHTML = '';
-  if (isGridIn(q)) {
-    // Student-produced response: typed answer instead of A–D
-    var row   = document.createElement('li');
+  if (q.type === 'free_response') {
+    var li = document.createElement('li');
+    li.className = 'fr-answer no-math';
     var label = document.createElement('label');
+    label.textContent = 'Your answer';
+    label.setAttribute('for', 'fr-input');
     var input = document.createElement('input');
-    row.className     = 'grid-in-row';
-    label.className   = 'grid-in-label';
-    label.htmlFor     = 'grid-in-input';
-    label.textContent = 'Enter your answer';
-    input.id           = 'grid-in-input';
-    input.className    = 'grid-in-input';
-    input.type         = 'text';
+    input.type = 'text';
+    input.id = 'fr-input';
     input.autocomplete = 'off';
-    input.value        = answers[mi][currentQ] || '';
+    input.maxLength = 10;
+    input.placeholder = 'e.g. 12, 3/4 or .75';
+    input.value = answers[mi][currentQ] !== null ? answers[mi][currentQ] : '';
     input.addEventListener('input', function() {
-      var v = input.value.trim();
-      answers[mi][currentQ] = v === '' ? null : v;
+      answers[mi][currentQ] = input.value.trim() === '' ? null : input.value;
       renderGrid();
     });
-    row.appendChild(label);
-    row.appendChild(input);
-    list.appendChild(row);
+    var hint = document.createElement('div');
+    hint.className = 'fr-hint';
+    hint.textContent = 'Type your answer. Fractions (3/4) and decimals (.75) both work.';
+    li.appendChild(label);
+    li.appendChild(input);
+    li.appendChild(hint);
+    list.appendChild(li);
   } else {
     q.choices.forEach(function(choice, ci) {
-      var li     = document.createElement('li');
-      var letter = document.createElement('span');
+      var li = document.createElement('li');
       if (answers[mi][currentQ] === ci) li.classList.add('selected');
-      letter.className   = 'choice-letter';
-      letter.textContent = letters[ci];
-      li.appendChild(letter);
-      li.appendChild(document.createTextNode(' ' + choice));
+      li.innerHTML = '<span class="choice-letter">' + letters[ci] + '</span> ' + choice;
+      markMath(li, choice);
       li.addEventListener('click', function() { selectAnswer(ci); });
       list.appendChild(li);
     });
@@ -189,6 +210,7 @@ function render() {
         { left: '$$', right: '$$', display: true  },
         { left: '\\(', right: '\\)', display: false }
       ],
+      ignoredClasses: ['no-math'],
       throwOnError: false
     });
   }
@@ -251,7 +273,7 @@ function nextModule() {
     answers:    mod.questions.map(function(q, i) {
       return {
         question_id:     q.id,
-        selected_answer: answerValue(answers[currentModule][i]),
+        selected_answer: answerValue(currentModule, i),
         flagged:         flagged[currentModule][i]
       };
     })
@@ -270,7 +292,7 @@ function nextModule() {
     var modLabel = mod.title;
     allResults.modules.push(modLabel);
     mod.questions.forEach(function(q, qi) {
-      var selected = answerValue(answers[mi][qi]);
+      var selected = answerValue(mi, qi);
       var correct  = q.answer !== null ? ['A','B','C','D'][q.answer] : null;
       var entry = {
         question_id:     q.id || (mi * 100 + qi + 1),
@@ -297,8 +319,19 @@ function nextModule() {
   localStorage.setItem('satResults', JSON.stringify(allResults));
 
   if (currentModule + 1 < MODULES.length) {
-    currentModule++;
-    showSectionTitle();
+    var advance = function() {
+      if (currentModule + 1 < MODULES.length) {
+        currentModule++;
+        showSectionTitle();
+      } else {
+        nextModule();   // the pending Module 2 turned out to be empty; finish the test
+      }
+    };
+    if (MODULES[currentModule + 1].pending) {
+      loadAdaptiveModule(currentModule, advance);
+    } else {
+      advance();
+    }
   } else {
     var activity = JSON.parse(localStorage.getItem('satprep_activity') || '[]');
     activity.push({
@@ -348,17 +381,8 @@ function transformQuestions(questions) {
   moduleOrder.forEach(function(key) { groups[key] = []; });
 
   questions.forEach(function(q) {
-    var mapped = {
-      id:        q.id,
-      text:      q.text,
-      passage:   q.passage || '',
-      image_url: q.image_url || null,
-      choices:   [q.choice_a, q.choice_b, q.choice_c, q.choice_d],
-      answer:    null,
-      difficulty: q.difficulty
-    };
     if (groups[q.subject] !== undefined) {
-      groups[q.subject].push(mapped);
+      groups[q.subject].push(mapQuestion(q));
     }
   });
 
@@ -369,10 +393,79 @@ function transformQuestions(questions) {
     'Section 2, Module 2: Math':                35 * 60
   };
 
-  return moduleOrder
-    .filter(function(key) { return groups[key].length > 0; })
-    .map(function(key) {
-      return { title: key, totalTime: timings[key], questions: groups[key] };
+  // An adaptive test sends only its Module 1s here. Add an empty "pending" Module 2 after
+  // each Module 1; it is filled in by loadAdaptiveModule() once that Module 1 is submitted.
+  var module2Of = {
+    'Section 1, Module 1: Reading and Writing': ['Section 1, Module 2: Reading and Writing', 'reading_writing'],
+    'Section 2, Module 1: Math':                ['Section 2, Module 2: Math', 'math']
+  };
+  var modules = [];
+  moduleOrder.forEach(function(key) {
+    if (groups[key].length > 0) {
+      modules.push({ title: key, totalTime: timings[key], questions: groups[key] });
+      var m2 = module2Of[key];
+      if (m2 && groups[m2[0]].length === 0) {
+        modules.push({ title: m2[0], totalTime: timings[m2[0]], questions: [], pending: true, section: m2[1] });
+      }
+    }
+  });
+  return modules;
+}
+
+function mapQuestion(q) {
+  var choices = [q.choice_a, q.choice_b, q.choice_c, q.choice_d];
+  var hasChoices = choices.some(function(c) { return c && String(c).trim() !== ''; });
+  return {
+    id:         q.id,
+    text:       q.text,
+    passage:    q.passage || '',
+    image_url:  q.image_url || null,
+    choices:    choices,
+    type:       (q.question_type === 'free_response' || !hasChoices) ? 'free_response' : 'mcq',
+    answer:     null,
+    difficulty: q.difficulty
+  };
+}
+
+// Ask the backend which Module 2 this student gets (Lower or Higher), based on the
+// Module 1 they just finished, and slot its questions into the pending module.
+function loadAdaptiveModule(m1Index, done) {
+  var target = MODULES[m1Index + 1];
+  document.getElementById('section-title').textContent = 'Loading the next module...';
+  fetch(PT_API_BASE + '/tests/' + TEST_ID + '/module2', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      section: target.section,
+      answers: MODULES[m1Index].questions.map(function(q, i) {
+        return { question_id: q.id, selected_answer: answerValue(m1Index, i) };
+      })
+    })
+  })
+    .then(function(res) {
+      if (!res.ok) throw new Error('API returned ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
+      var qs = (data.questions || []).map(mapQuestion);
+      if (qs.length === 0) {
+        MODULES.splice(m1Index + 1, 1);          // no Module 2 for this test
+        answers.splice(m1Index + 1, 1);
+        flagged.splice(m1Index + 1, 1);
+        questionTimes.splice(m1Index + 1, 1);
+      } else {
+        target.questions = qs;
+        target.pending   = false;
+        target.variant   = data.module2_variant;
+        answers[m1Index + 1]       = qs.map(function() { return null; });
+        flagged[m1Index + 1]       = qs.map(function() { return false; });
+        questionTimes[m1Index + 1] = qs.map(function() { return 0; });
+      }
+      done();
+    })
+    .catch(function() {
+      alert('Could not load the next module. Check your connection, then press OK to try again.');
+      loadAdaptiveModule(m1Index, done);
     });
 }
 
