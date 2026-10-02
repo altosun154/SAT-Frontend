@@ -1,7 +1,5 @@
 # Digital SAT Testing Analytics Platform — Frontend
 
-![Dashboard screenshot](docs/screenshot.png)
-
 > Pure HTML, CSS, and JavaScript frontend application. No backend required.
 
 ---
