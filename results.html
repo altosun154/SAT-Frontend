@@ -56,11 +56,30 @@
 
   <div class="page-container">
 
+    <!-- ── Past Results Picker ─────────────────────── -->
+    <div class="past-results-bar hidden" id="pastResultsBar">
+      <label for="pastResultsSelect">Past Results</label>
+      <select id="pastResultsSelect" class="past-results-select" onchange="goToPastResult(this.value)"></select>
+    </div>
+
+    <!-- ── Empty State (no completed tests) ────────── -->
+    <div id="resultsEmpty" class="results-empty hidden">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+      <h3>No completed tests yet</h3>
+      <p>Take a practice test to see your results here.</p>
+      <a href="test-library.html" class="btn btn-primary">Practice Tests</a>
+    </div>
+
+    <div id="resultsContent">
+
     <!-- ── Score Hero ──────────────────────────────── -->
     <div class="results-hero">
       <div class="results-hero-left">
         <h2>Test Results</h2>
-        <div class="test-name" id="hero-test-name">Practice Test 1</div>
+        <div class="test-name" id="hero-test-name">—</div>
         <div class="test-date" id="hero-test-date">—</div>
       </div>
 
@@ -127,19 +146,19 @@
     <!-- ── Summary Stats ──────────────────────────── -->
     <div class="summary-stats">
       <div class="stat-box" id="correct-btn" onclick="toggleCorrectQuestions()" style="cursor: pointer;">
-        <div class="stat-val">72</div>
+        <div class="stat-val">—</div>
         <div class="stat-lbl">Correct</div>
       </div>
       <div class="stat-box" id="incorrect-btn" onclick="toggleIncorrectQuestions()" style="cursor: pointer;">
-        <div class="stat-val">16</div>
+        <div class="stat-val">—</div>
         <div class="stat-lbl">Incorrect</div>
       </div>
       <div class="stat-box" id="skipped-btn" onclick="toggleSkippedQuestions()" style="cursor: pointer;">
-        <div class="stat-val">4</div>
+        <div class="stat-val">—</div>
         <div class="stat-lbl">Skipped</div>
       </div>
       <div class="stat-box">
-        <div class="stat-val">78%</div>
+        <div class="stat-val" id="stat-accuracy">—</div>
         <div class="stat-lbl">Overall Accuracy</div>
       </div>
       <div class="stat-box">
@@ -191,6 +210,8 @@
       </div>
       <div class="question-grid" id="questionGrid"></div>
     </div>
+
+    </div><!-- /resultsContent -->
 
   </div>
 
@@ -257,7 +278,6 @@
 
   <script src="js/accessibility.js"></script>
   <script src="js/notifications.js"></script>
-  <script src="js/data/results-mock.js"></script>
   <script src="js/results.js"></script>
 </body>
 </html>

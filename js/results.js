@@ -11,7 +11,6 @@ const BASE = 'https://digital-sat-testing-analytics-platform.onrender.com';
 
 // ── Fetch Results from Backend ──────────────────────
 async function loadResults() {
-  const userId = sessionStorage.getItem('authUserId') || 1;
   const params = new URLSearchParams(window.location.search);
   const testId = params.get('test_id') || localStorage.getItem('lastTestId') || 1;
   const sessionId = params.get('session_id') || null;
@@ -22,14 +21,25 @@ async function loadResults() {
   // Try API first
   try {
     [summary, correct, incorrect, skipped] = await Promise.all([
-      fetch(`${BASE}/results?user_id=${userId}&test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.json()).catch(() => null),
-      fetch(`${BASE}/results/correct?user_id=${userId}&test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.json()).catch(() => []),
-      fetch(`${BASE}/results/incorrect?user_id=${userId}&test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.json()).catch(() => []),
-      fetch(`${BASE}/results/skipped?user_id=${userId}&test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.json()).catch(() => []),
+      fetch(`${BASE}/results?test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${BASE}/results/correct?test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${BASE}/results/incorrect?test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${BASE}/results/skipped?test_id=${testId}${sessionParam}`, { headers: { 'Authorization': 'Bearer ' + getToken() } }).then(r => r.ok ? r.json() : []).catch(() => []),
     ]);
   } catch (e) {}
 
-  // Fall back to localStorage if API returned nothing
+  const hasData = !!(summary && summary.has_data);
+
+  const emptyEl   = document.getElementById('resultsEmpty');
+  const contentEl = document.getElementById('resultsContent');
+  if (emptyEl)   emptyEl.classList.toggle('hidden', hasData);
+  if (contentEl) contentEl.classList.toggle('hidden', !hasData);
+
+  if (!hasData) {
+    return [];
+  }
+
+  // Fall back to localStorage question detail if the list endpoints returned nothing
   if (!correct.length && !incorrect.length && !skipped.length) {
     const stored = localStorage.getItem('satResults');
     if (stored) {
@@ -40,13 +50,34 @@ async function loadResults() {
     }
   }
 
-  // Update summary stats from actual question arrays
-  const totalQ = correct.length + incorrect.length + skipped.length;
-  if (document.getElementById('stat-correct'))   document.getElementById('stat-correct').textContent   = correct.length;
-  if (document.getElementById('stat-incorrect')) document.getElementById('stat-incorrect').textContent = incorrect.length;
-  if (document.getElementById('stat-skipped'))   document.getElementById('stat-skipped').textContent   = skipped.length;
-  if (document.getElementById('stat-accuracy'))  document.getElementById('stat-accuracy').textContent  =
-    totalQ > 0 ? Math.round((correct.length / totalQ) * 100) + '%' : '—';
+  // Overall stat boxes — straight from the authoritative summary, never recomputed
+  document.getElementById('correct-btn').querySelector('.stat-val').textContent   = summary.correct;
+  document.getElementById('incorrect-btn').querySelector('.stat-val').textContent = summary.incorrect;
+  document.getElementById('skipped-btn').querySelector('.stat-val').textContent   = summary.skipped;
+  if (document.getElementById('stat-accuracy')) {
+    document.getElementById('stat-accuracy').textContent =
+      summary.accuracy != null ? Math.round(summary.accuracy) + '%' : '—';
+  }
+
+  // ── Skills breakdown (from API, no local section grouping) ──
+  const skillList = document.getElementById('skillList');
+  if (skillList) {
+    skillList.innerHTML = '';
+    (summary.skills || []).forEach(skill => {
+      const pct = skill.accuracy != null ? Math.round(skill.accuracy) : null;
+      const row = document.createElement('div');
+      row.className = 'skill-row';
+      row.innerHTML = `
+        <div class="skill-name">${skill.skill}</div>
+        <div class="skill-bar-wrap">
+          <div class="skill-bar ${pct != null ? colorClass(pct) : ''}" style="width:0%"
+               data-pct="${pct != null ? pct : 0}"></div>
+        </div>
+        <div class="skill-pct">${pct != null ? pct + '%' : '—'}</div>
+      `;
+      skillList.appendChild(row);
+    });
+  }
 
   // ── Section cards ─────────────────────────────────
   function isMath(q) { return (q.subject || '').toLowerCase().includes('math'); }
@@ -54,7 +85,7 @@ async function loadResults() {
 
   const rwC = correct.filter(isRW).length,   rwI = incorrect.filter(isRW).length,   rwS = skipped.filter(isRW).length;
   const mC  = correct.filter(isMath).length, mI  = incorrect.filter(isMath).length, mS  = skipped.filter(isMath).length;
-  const rwTotal = rwC + rwI + rwS, mTotal = mC + mI + mS;
+  const rwAnswered = rwC + rwI, mAnswered = mC + mI;
 
   function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
   function setBar(id, pct) { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; }
@@ -62,11 +93,11 @@ async function loadResults() {
   set('rw-correct',   rwC);
   set('rw-incorrect', rwI);
   set('rw-skipped',   rwS);
-  set('rw-accuracy',  rwTotal > 0 ? Math.round((rwC / rwTotal) * 100) + '%' : '—');
+  set('rw-accuracy',  rwAnswered > 0 ? Math.round((rwC / rwAnswered) * 100) + '%' : '—');
   set('math-correct',   mC);
   set('math-incorrect', mI);
   set('math-skipped',   mS);
-  set('math-accuracy',  mTotal > 0 ? Math.round((mC / mTotal) * 100) + '%' : '—');
+  set('math-accuracy',  mAnswered > 0 ? Math.round((mC / mAnswered) * 100) + '%' : '—');
 
   // Section scores from summary if available, otherwise just show correct counts
   if (summary) {
@@ -145,19 +176,6 @@ async function loadResults() {
     .sort((a, b) => a.question_id - b.question_id)
     .map((q, i) => mapQ(q, q._status, i + 1));
 
-  // Update summary stat boxes
-  const c = all.filter(q => q.status === 'correct').length;
-  const w = all.filter(q => q.status === 'incorrect').length;
-  const s = all.filter(q => q.status === 'skipped').length;
-  document.getElementById('correct-btn').querySelector('.stat-val').textContent   = c;
-  document.getElementById('incorrect-btn').querySelector('.stat-val').textContent = w;
-  document.getElementById('skipped-btn').querySelector('.stat-val').textContent   = s;
-  const total = c + w + s;
-  if (total > 0) {
-    const el = document.getElementById('stat-accuracy');
-    if (el) el.textContent = Math.round((c / total) * 100) + '%';
-  }
-
   const timed = all.filter(q => q.time_taken > 0);
   if (timed.length) {
     const avgSec = Math.round(timed.reduce((s, q) => s + q.time_taken, 0) / timed.length);
@@ -168,10 +186,55 @@ async function loadResults() {
   return all;
 }
 
-// Mock/fallback data (skills, modules, questionData) loaded from js/data/results-mock.js.
-// That file may be absent, so read its globals defensively rather than crashing the page.
-function mockSkills()    { return typeof skills       !== 'undefined' ? skills       : []; }
-function mockQuestions() { return typeof questionData !== 'undefined' ? questionData : []; }
+// ── Past Results Picker ──────────────────────────────
+
+function pastResultKey(test_id, session_id) {
+  return String(test_id) + '::' + (session_id || '');
+}
+
+async function loadPastResultsList() {
+  const bar    = document.getElementById('pastResultsBar');
+  const select = document.getElementById('pastResultsSelect');
+  if (!bar || !select) return;
+
+  let history = [];
+  try {
+    const res = await fetch(`${BASE}/results/history`, { headers: { 'Authorization': 'Bearer ' + getToken() } });
+    history = res.ok ? await res.json() : [];
+  } catch (e) { history = []; }
+
+  if (!Array.isArray(history) || history.length < 2) {
+    // Nothing to pick between — leave the picker hidden.
+    return;
+  }
+
+  const params    = new URLSearchParams(window.location.search);
+  const curTestId = params.get('test_id') || localStorage.getItem('lastTestId') || '1';
+  const curKey    = pastResultKey(curTestId, params.get('session_id'));
+
+  select.innerHTML = '';
+  history.slice().reverse().forEach(t => {
+    const key  = pastResultKey(t.test_id, t.session_id);
+    const d    = t.completed_at ? new Date(t.completed_at) : null;
+    const date = d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown date';
+    const score = t.total_score != null ? t.total_score + '/1600' : ((t.correct || 0) + ' correct');
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = date + ' — ' + score;
+    if (key === curKey) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  bar.classList.remove('hidden');
+}
+
+function goToPastResult(key) {
+  if (!key) return;
+  const [testId, sessionId] = key.split('::');
+  let url = 'results.html?test_id=' + encodeURIComponent(testId);
+  if (sessionId) url += '&session_id=' + encodeURIComponent(sessionId);
+  window.location.href = url;
+}
 
 // ── Render Skills ──────────────────────────────────
 
@@ -180,32 +243,6 @@ function colorClass(pct) {
   if (pct >= 60) return "mid";
   return "low";
 }
-
-const skillList = document.getElementById("skillList");
-let currentSection = "";
-
-mockSkills().forEach(skill => {
-  if (skill.section !== currentSection) {
-    currentSection = skill.section;
-    const label = document.createElement("div");
-    label.style.cssText = "font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#999;margin:8px 0 4px;";
-    label.textContent = currentSection;
-    skillList.appendChild(label);
-  }
-
-  const row = document.createElement("div");
-  row.className = "skill-row";
-  row.innerHTML = `
-    <div class="skill-name">${skill.name}</div>
-    <div class="skill-bar-wrap">
-      <div class="skill-bar ${colorClass(skill.pct)}" style="width:0%"
-           data-pct="${skill.pct}"></div>
-    </div>
-    <div class="skill-pct">${skill.pct}%</div>
-  `;
-  skillList.appendChild(row);
-});
-
 
 // ── Close All Question Sections ─────────────────────
 
@@ -245,7 +282,7 @@ function toggleIncorrectQuestions() {
 
 function populateIncorrectQuestions() {
   const incorrectList = document.getElementById('incorrectList');
-  const source = liveData || mockQuestions();
+  const source = liveData || [];
   const incorrectQuestions = source.filter(q => q.status === 'incorrect');
 
   incorrectQuestions.forEach(q => {
@@ -288,7 +325,7 @@ function toggleCorrectQuestions() {
 
 function populateCorrectQuestions() {
   const correctList = document.getElementById('correctList');
-  const source = liveData || mockQuestions();
+  const source = liveData || [];
   const correctQuestions = source.filter(q => q.status === 'correct');
 
   correctQuestions.forEach(q => {
@@ -331,7 +368,7 @@ function toggleSkippedQuestions() {
 
 function populateSkippedQuestions() {
   const skippedList = document.getElementById('skippedList');
-  const source = liveData || mockQuestions();
+  const source = liveData || [];
   const skippedQuestions = source.filter(q => q.status === 'skipped');
 
   skippedQuestions.forEach(q => {
@@ -391,16 +428,15 @@ let liveData = null;
 
 // ── Animate bars on load ───────────────────────────
 window.addEventListener("load", async () => {
-  // Try to load real results from API
-  let data;
+  let data = [];
   try {
     data = await loadResults();
-    if (!data.length) throw new Error('empty');
     liveData = data;
-  } catch(e) {
-    // Fall back to mock data
-    data = mockQuestions();
+  } catch (e) {
+    data = [];
   }
+
+  loadPastResultsList();
 
   renderGrid(data);
 

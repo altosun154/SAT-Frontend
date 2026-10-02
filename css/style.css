@@ -1,5 +1,7 @@
 /* nav.css — results page layout (cross-platform, reset handled by reset.css) */
 
+.hidden { display: none !important; }
+
 body {
   font-family: var(--font-system);
   background: #f4f6f9;
